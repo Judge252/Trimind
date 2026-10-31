@@ -13,6 +13,7 @@ import { Link } from "react-router-dom";
 import { ArrowUpRight, Check, ChevronRight, LoaderCircle } from "lucide-react";
 import { useApp } from "../app/context";
 import { tracks } from "../content/scenarios";
+import { TrackGlyph } from './TrackArtwork';
 import type { Course, Track } from "../models";
 import { courseProgress } from "../logic/learning";
 export function Button({
@@ -52,26 +53,29 @@ export function Go({
   );
 }
 export function Page({
+  track,
   title,
   eyebrow,
   description,
   children,
   actions,
 }: {
-  title: string;
+  track?: Track;
+  title: ReactNode;
   eyebrow?: string;
   description?: string;
   children: ReactNode;
   actions?: ReactNode;
 }) {
   return (
-    <main id="main" className="container page">
+    <main id="main" className="container page" data-track={track}>
       <div className="page-head">
         <div>
           {eyebrow && <p className="eyebrow">{eyebrow}</p>}
           <h1>{title}</h1>
           {description && <p className="lede">{description}</p>}
         </div>
+        {track && <div className="page-track-art"><TrackGlyph track={track}/></div>}
         {actions}
       </div>
       {children}
@@ -135,13 +139,15 @@ export function Field({
 export function Status({
   children,
   error = false,
+  tone = 'info',
 }: {
   children: ReactNode;
   error?: boolean;
+  tone?: 'info' | 'success' | 'warning';
 }) {
   return (
     <div
-      className={`status ${error ? "error" : ""}`}
+      className={`status ${error ? "error" : tone}`}
       role={error ? "alert" : "status"}
     >
       {children}
@@ -152,14 +158,16 @@ export function Empty({
   title,
   children,
   action,
+  track,
 }: {
   title: string;
   children: ReactNode;
   action?: ReactNode;
+  track?: Track;
 }) {
   return (
     <div className="empty">
-      <div className="empty-symbol">✳</div>
+      <div className={`empty-symbol ${track ? 'has-track-art' : ''}`} aria-hidden="true">{track ? <TrackGlyph track={track}/> : '✳'}</div>
       <h2>{title}</h2>
       <p>{children}</p>
       {action}
@@ -237,9 +245,9 @@ export function CourseCard({ course }: { course: Course }) {
   const { data, text, t } = useApp();
   const complete = courseProgress(course, data.lessons);
   return (
-    <article className="course-card">
+    <article className="course-card" data-track={course.track}>
       <div className={`course-art ${course.track}`}>
-        <span>{tracks[course.track].icon}</span>
+        <TrackGlyph track={course.track}/>
         <span className="art-caption">
           {text(tracks[course.track].name)} / 01
         </span>
@@ -400,6 +408,7 @@ export function Tabs({
           type="button"
           role="tab"
           aria-selected={v.id === value}
+          data-track={v.id}
           aria-controls="tab-panel"
           id={`tab-${v.id}`}
           tabIndex={v.id === value ? 0 : -1}

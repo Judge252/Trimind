@@ -280,7 +280,7 @@ export function Practice() {
     >
       <div className="three-grid">
         {(["builder", "founder", "investor"] as Track[]).map((track, i) => (
-          <article className="practice-card" key={track}>
+          <article className="practice-card" key={track} data-track={track}>
             <Artwork kind={track} />
             <TrackPill track={track} />
             <h2>
@@ -340,6 +340,7 @@ export function Investor() {
         "Decisions today. Perspective tomorrow.",
         "قرارات اليوم. رؤية الغد.",
       )}
+      track="investor"
       eyebrow={t("INVESTOR / SIMULATED MARKET", "المستثمر / سوق افتراضي")}
       description={t(
         "Start with EGP 10,000 virtual cash. Buy or sell fictional whole units, then advance through four fixed events. There are no trading fees in this exercise.",
@@ -622,7 +623,7 @@ export function Founder() {
     last = s.history.at(-1),
     cost = Number(capacity) * 25 + Number(marketing) + 200;
   return (
-    <Page
+    <Page track="founder"
       title={t(
         "Small business. Meaningful decisions.",
         "مشروع صغير. قرارات مؤثرة.",
@@ -915,6 +916,7 @@ export function Builder() {
   return (
     <Page
       title={t("Build less. Make it work.", "ابنِ أقل. واجعله يعمل.")}
+      track="builder"
       eyebrow={t("BUILDER / STUDY PLANNER MVP", "المطوّر / منظم دراسة أولي")}
       description={t(
         "Create a planner that lets a learner add a task, reopen a saved list and mark work complete. Include keyboard and error testing. You have 24 hours and EGP 1,200.",

@@ -57,7 +57,7 @@ export default function GuestImport() {
     }
   };
   return (
-    <section className="panel plan-profile-summary">
+    <section className="panel plan-profile-summary guest-import">
       <h2>{t("Bring your local progress", "استورد تقدمك المحلي")}</h2>
       <p>
         {t(

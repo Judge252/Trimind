@@ -107,7 +107,7 @@ export function Projects() {
       {data.projects.length ? (
         <div className="three-grid">
           {data.projects.map((p) => (
-            <article key={p.id} className="panel project-card">
+            <article key={p.id} className="panel project-card" data-track={p.track}>
               <TrackPill track={p.track} />
               <h2>
                 <Link to={`/projects/${p.id}`}>{p.title}</Link>
@@ -133,6 +133,7 @@ export function Projects() {
         </div>
       ) : (
         <Empty
+          track={requested && ['builder','founder','investor'].includes(requested) ? requested as Track : undefined}
           title={t(
             "Good ideas need a first draft.",
             "الأفكار الجيدة تحتاج مسودة أولى.",
@@ -218,6 +219,7 @@ export function ProjectWorkspace() {
   return (
     <Page
       title={t("Shape the idea.", "شكّل الفكرة.")}
+      track={draft.track}
       eyebrow={t("PROJECT WORKSPACE", "مساحة عمل المشروع")}
       description={t(
         "Save explicitly before leaving this page. Download and print use the current preview.",

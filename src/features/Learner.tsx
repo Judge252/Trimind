@@ -53,7 +53,7 @@ export function Dashboard() {
       eyebrow={t("MY LEARNING", "تعلّمي")}
       title={
         displayName
-          ? `${t("Welcome back,", "أهلاً بعودتك،")} ${displayName}.`
+          ? <>{t("Welcome back,", "أهلاً بعودتك،")} <bdi>{displayName}</bdi>.</>
           : t("Your next chapter starts here.", "فصلك التالي يبدأ هنا.")
       }
       description={t(
@@ -86,7 +86,7 @@ export function Dashboard() {
         />
       </div></details>
       <div className="dashboard-grid">
-        <div className="panel continue-panel">
+        <div className="panel continue-panel" data-track={c.track}>
           <TrackPill track={c.track} />
           <h2>{text(c.title)}</h2>
           <p>
@@ -109,7 +109,7 @@ export function Dashboard() {
             )}
           </Go>
         </div>
-        <div className="panel">
+        <div className="panel challenge-panel" data-track={c.track}>
           <p className="eyebrow">{t("YOUR NEXT CHALLENGE", "تحديك التالي")}</p>
           <h2>{text(tracks[c.track].tag)}</h2>
           <p>

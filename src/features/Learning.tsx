@@ -101,6 +101,7 @@ export function CoursePage() {
   return (
     <Page
       title={text(c.title)}
+      track={c.track}
       description={text(c.description)}
       eyebrow={text(tracks[c.track].name)}
     >
@@ -194,6 +195,7 @@ export function LessonPage() {
   return (
     <Page
       title={text(l.title)}
+      track={c.track}
       eyebrow={`${text(tracks[c.track].name)} / ${idx + 1} ${t("of", "من")} ${c.lessons.length}`}
     >
       <Breadcrumb
@@ -249,7 +251,7 @@ export function LessonPage() {
               {t("Check answer", "تحقق من الإجابة")}
             </Button>
             {checked && (
-              <Status>
+              <Status tone={answer === l.check.answer ? 'success' : 'warning'}>
                 {answer === l.check.answer
                   ? t("That’s right. ", "صحيح. ")
                   : t(
@@ -367,6 +369,7 @@ export function QuizPage() {
   return (
     <Page
       title={t("Put your knowledge to work.", "طبّق ما تعلمته.")}
+      track={c.track}
       eyebrow={text(c.title)}
     >
       <div className="quiz-container">

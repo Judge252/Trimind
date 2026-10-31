@@ -136,7 +136,7 @@ export function PlanDashboard({ compact = false }: { compact?: boolean }) {
     complete = p.activities.filter((a) => activityComplete(a, data)).length,
     next = p.activities.find((a) => !activityComplete(a, data));
   return (
-    <section className="panel plan-callout">
+    <section className="panel plan-callout" data-track={p.primaryPath}>
       <div>
         <p className="eyebrow">
           {t("YOUR PERSONAL PLAN", "خطتك الشخصية")} · {t("VERSION", "النسخة")}{" "}
@@ -262,7 +262,7 @@ export default function MyPlan() {
         </Go>
       }
     >
-      <section className="journey-start">
+      <section className="journey-start" data-track={p.primaryPath}>
         <p className="eyebrow">{t('YOUR RECOMMENDED START','بدايتك المقترحة')}</p>
         <TrackPill track={p.primaryPath}/>
         <h2>{next ? text(next.title) : t('A journey worth continuing.','رحلة تستحق أن تستمر.')}</h2>
@@ -459,7 +459,7 @@ export default function MyPlan() {
         </p>
         <ol className="plan-activities">
           {p.activities.map((a) => (
-            <li key={a.id}>
+            <li key={a.id} data-track={a.track} data-state={activityComplete(a,data) ? 'complete' : next?.id===a.id ? 'current' : 'upcoming'} aria-current={next?.id===a.id ? 'step' : undefined}>
               <div>
                 <TrackPill track={a.track} />
                 <h3>{text(a.title)}</h3>

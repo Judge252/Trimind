@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="820" height="820" viewBox="0 0 82 82">
+  <title>Move ai app icon mark</title>
+  <desc>Rounded lime-green square with a transparent navigation-pointer cutout.</desc>
+  <path fill="#93FE60" fill-rule="evenodd" d="
+    M 20,0
+    H 62
+    C 73.05,0 82,8.95 82,20
+    V 62
+    C 82,73.05 73.05,82 62,82
+    H 20
+    C 8.95,82 0,73.05 0,62
+    V 20
+    C 0,8.95 8.95,0 20,0
+    Z
+
+    M 17.8,29.8
+    L 56.8,22.2
+    C 59.9,21.6 62.2,24.5 61.0,27.5
+    L 45.2,64.2
+    C 44.0,67.0 40.1,66.6 39.7,63.5
+    C 38.5,53.9 33.5,45.5 26.0,39.4
+    C 23.4,37.3 20.4,36.0 17.4,35.2
+    C 13.7,34.2 13.8,30.5 17.8,29.8
+    Z"
+    clip-rule="evenodd"/>
+</svg>

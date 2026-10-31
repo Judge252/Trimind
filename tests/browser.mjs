@@ -14,14 +14,17 @@ const context = await browser.newContext({
   viewport: { width: 1440, height: 1000 },
   acceptDownloads: true,
 });
-const page = await context.newPage();
-page.on("pageerror", (e) => issues.push(e.message));
-page.on("console", (m) => {
-  if (m.type() === "error") issues.push(m.text());
-});
-page.on("response", (r) => {
-  if (r.status() >= 400) issues.push(`${r.status()} ${r.url()}`);
-});
+let page = await context.newPage();
+const observePage = () => {
+  page.on("pageerror", (e) => issues.push(e.message));
+  page.on("console", (m) => {
+    if (m.type() === "error") issues.push(m.text());
+  });
+  page.on("response", (r) => {
+    if (r.status() >= 400) issues.push(`${r.status()} ${r.url()}`);
+  });
+};
+observePage();
 const go = async (p) => {
   await page.goto(base + p);
   await page.locator("main h1").waitFor();
@@ -240,6 +243,10 @@ try {
       await page.waitForFunction(() => document.documentElement.dir === "rtl");
     }
     for (const width of [1440, 768, 320]) {
+      // Release the previous renderer between sweeps; the same guest context retains its data.
+      await page.close();
+      page = await context.newPage();
+      observePage();
       await page.setViewportSize({ width, height: 1000 });
       for (const route of routes) {
         await go(route);
@@ -400,7 +407,7 @@ try {
   await fs.writeFile(
     "test-results/browser-report.json",
     JSON.stringify(
-      { status: "FAIL", checks, error: String(error), issues },
+      { status: "FAIL", url: page.url(), checks, error: String(error), issues },
       null,
       2,
     ),
