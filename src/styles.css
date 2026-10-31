@@ -2355,3 +2355,407 @@ dialog h2 {
     color: #000;
   }
 }
+
+/* Assessment and personal planning extend the existing white gallery system. */
+.field-error {
+  color: #812121 !important;
+  font-weight: 500 !important;
+}
+input[aria-invalid="true"],
+select[aria-invalid="true"],
+textarea[aria-invalid="true"] {
+  border-color: #9d2828 !important;
+}
+.account-fields {
+  padding: 0;
+  margin: 0;
+  border: 0;
+  min-width: 0;
+}
+.account-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-block: 24px 0;
+  font-size: 14px;
+}
+.account-links a {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.assessment-layout {
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr);
+  gap: 56px;
+  align-items: start;
+}
+.assessment-sidebar {
+  position: sticky;
+  top: 24px;
+}
+.assessment-sidebar nav p {
+  font-size: 14px;
+  border-inline-start: 2px solid #e2e2e2;
+  padding-inline-start: 16px;
+  margin-block: 0 24px;
+}
+.assessment-sidebar nav p.current {
+  border-color: #4d49fc;
+  color: #000;
+}
+.assessment-sidebar .text-link {
+  font-size: 13px;
+  margin-top: 16px;
+}
+.assessment-body {
+  min-width: 0;
+  max-width: 800px;
+}
+.assessment-body h2:focus {
+  outline: none;
+}
+.assessment-body .choices > p {
+  font-size: 15px;
+  line-height: 1.8;
+}
+.assessment-body .field label {
+  font-size: 20px;
+  line-height: 1.5;
+}
+.assessment-body .choices legend {
+  font-size: 23px;
+  line-height: 1.5;
+}
+.assessment-body section > h3 {
+  margin-top: 36px;
+  font-size: 21px;
+}
+.answer-review {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding-block: 20px;
+  border-bottom: 1px solid #e2e2e2;
+}
+.answer-review > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.answer-review b {
+  font-size: 15px;
+  font-weight: 500;
+}
+.answer-review p {
+  margin: 8px 0 0;
+  font-size: 14px;
+  white-space: pre-wrap;
+}
+.answer-review > .button {
+  flex-shrink: 0;
+}
+.assessment-save {
+  margin-top: 24px;
+}
+.plan-callout {
+  margin-bottom: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+}
+.plan-callout > div {
+  flex: 1;
+  min-width: 0;
+}
+.plan-callout h2 {
+  font-size: 30px;
+  max-width: 700px;
+}
+.plan-callout > div > .progress {
+  max-width: 600px;
+}
+.plan-callout > div > p {
+  max-width: 720px;
+}
+.plan-callout > .button {
+  flex-shrink: 0;
+}
+.plan-profile-summary {
+  margin-bottom: 48px;
+}
+.plan-profile-summary .starting-grid {
+  margin-top: 24px;
+}
+.plan-overview {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 48px;
+  align-items: start;
+}
+.plan-overview h2 {
+  margin-top: 24px;
+  font-size: 34px;
+}
+.plan-overview h3 {
+  font-size: 24px;
+}
+.plan-reasons {
+  padding-inline-start: 20px;
+  margin-block: 20px;
+}
+.plan-reasons li {
+  margin-bottom: 16px;
+  color: #595959;
+  font-size: 15px;
+  line-height: 1.7;
+}
+.plan-section {
+  margin-top: 64px;
+}
+.starting-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+.starting-grid > .panel {
+  padding: 24px;
+}
+.starting-grid h3 {
+  font-size: 23px;
+  margin-top: 24px;
+}
+.starting-grid p {
+  font-size: 15px;
+}
+.starting-grid small {
+  font-size: 13px;
+}
+.plan-activities {
+  list-style: none;
+  counter-reset: activity;
+  padding: 0;
+  margin-top: 32px;
+}
+.plan-activities > li {
+  counter-increment: activity;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  border-top: 1px solid #ddd;
+  padding-block: 28px;
+}
+.plan-activities > li:before {
+  content: counter(activity, decimal-leading-zero);
+  font-family: monospace;
+  font-size: 14px;
+  color: #595959;
+}
+.plan-activities > li > div:first-of-type {
+  flex: 1;
+}
+.plan-activities h3 {
+  font-size: 23px;
+  margin-block: 14px 8px;
+}
+.plan-activities p {
+  margin-bottom: 0;
+}
+.activity-action {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  font-size: 13px;
+}
+.session-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+  margin-top: 32px;
+}
+.session-grid h3 {
+  font-size: 22px;
+}
+.session-grid ul {
+  padding-inline-start: 20px;
+  margin-bottom: 0;
+}
+.session-grid li {
+  font-size: 14px;
+  margin-top: 16px;
+  color: #595959;
+  line-height: 1.7;
+}
+.plan-history {
+  list-style: none;
+  padding: 0;
+}
+.plan-history li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding-block: 20px;
+  border-bottom: 1px solid #ddd;
+  font-size: 14px;
+}
+.plan-history b {
+  font-size: 13px;
+}
+#worked-example,
+#knowledge-check {
+  scroll-margin-block-start: 32px;
+}
+.account-layout [tabindex="-1"]:focus {
+  outline: none;
+}
+@media (max-width: 1000px) {
+  .assessment-layout {
+    grid-template-columns: 220px minmax(0, 1fr);
+    gap: 32px;
+  }
+  .starting-grid,
+  .session-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .plan-overview {
+    gap: 32px;
+    grid-template-columns: 1fr 1fr;
+  }
+  .plan-callout {
+    flex-wrap: wrap;
+  }
+  .activity-action {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+  }
+}
+@media (max-width: 700px) {
+  .assessment-layout {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .assessment-sidebar {
+    position: static;
+  }
+  .assessment-sidebar nav {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .assessment-sidebar nav p {
+    font-size: 12px;
+    padding-inline-start: 8px;
+    margin-block: 0 12px;
+  }
+  .assessment-sidebar > .progress {
+    margin-top: 12px;
+    margin-bottom: 16px;
+  }
+  .assessment-sidebar > .text-link {
+    margin-top: 8px;
+  }
+  .plan-overview {
+    grid-template-columns: 1fr;
+  }
+  .plan-callout {
+    display: block;
+  }
+  .plan-callout > .button {
+    margin-top: 16px;
+  }
+  .plan-activities > li {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .plan-activities > li > div:first-of-type {
+    flex-basis: 80%;
+  }
+  .activity-action {
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding-inline-start: 30px;
+  }
+  .plan-history li {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .plan-section > .split {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .plan-section h2 {
+    font-size: 29px;
+  }
+  .plan-profile-summary {
+    padding: 20px;
+  }
+}
+@media (max-width: 540px) {
+  .starting-grid,
+  .session-grid {
+    grid-template-columns: 1fr;
+  }
+  .assessment-body .field label {
+    font-size: 19px;
+  }
+  .assessment-body .choices legend {
+    font-size: 21px;
+  }
+  .assessment-body .panel {
+    padding: 20px;
+  }
+  .assessment-body .choices > p {
+    font-size: 14px;
+  }
+  .answer-review {
+    gap: 8px;
+  }
+  .answer-review b {
+    font-size: 14px;
+  }
+  .answer-review .button {
+    font-size: 13px;
+    padding-inline: 6px;
+  }
+  .assessment-sidebar nav {
+    gap: 8px;
+  }
+  .assessment-sidebar nav p {
+    font-size: 11px;
+  }
+  .plan-callout h2 {
+    font-size: 27px;
+  }
+  .plan-overview h2 {
+    font-size: 30px;
+  }
+  .plan-profile-summary .starting-grid > .panel {
+    padding: 20px;
+  }
+  .plan-activities h3 {
+    font-size: 21px;
+  }
+  .activity-action {
+    padding-inline-start: 0;
+    font-size: 12px;
+  }
+  .activity-action .button {
+    font-size: 13px;
+    padding-inline: 14px;
+  }
+  .plan-section {
+    margin-top: 48px;
+  }
+  .plan-history li {
+    font-size: 13px;
+  }
+  .account-layout {
+    gap: 40px;
+  }
+}

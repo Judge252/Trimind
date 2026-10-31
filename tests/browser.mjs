@@ -53,14 +53,11 @@ try {
   assert.equal(await page.locator(":focus").getAttribute("id"), "main");
   check("Keyboard skip link reachable and moves focus to main");
   await page.getByRole("link", { name: "Try the demo", exact: true }).click();
-  await page.getByLabel("Create a practical project", { exact: true }).check();
-  await click("Continue");
-  await page.getByLabel("I’m starting fresh", { exact: true }).check();
-  await click("Continue");
-  await page.getByRole("radio", { name: /Builder/ }).check();
-  await click("Go to My learning");
+  await page
+    .getByRole("link", { name: "Browse as guest", exact: true })
+    .click();
   assert.match(page.url(), /dashboard/);
-  assert.equal((await data()).lessons.length, 0);
+  assert.equal((await data())?.lessons.length ?? 0, 0);
   check("Guest onboarding → fresh zero-progress dashboard");
   await page
     .getByRole("link", { name: "Continue learning", exact: true })
@@ -173,10 +170,10 @@ try {
     "Builder valid/invalid plans, durable result and explicit save to project",
   );
   await go("/login");
-  await click("Check account availability");
+  await click("Log in — preview");
   await page
     .getByRole("alert")
-    .filter({ hasText: "Enter a valid email" })
+    .filter({ hasText: "Check the highlighted fields" })
     .waitFor();
   await page.getByLabel("Email", { exact: true }).fill("judge@example.test");
   await page
@@ -187,10 +184,10 @@ try {
     await page.getByLabel("Password", { exact: true }).getAttribute("type"),
     "text",
   );
-  await click("Check account availability");
+  await click("Log in — preview");
   await page
-    .getByRole("status")
-    .filter({ hasText: "No authentication was performed" })
+    .getByRole("alert")
+    .filter({ hasText: "You have not been logged in" })
     .waitFor();
   assert.ok(!JSON.stringify(await data()).includes("not-a-real-password"));
   check("Honest account limitation and no password persistence");
@@ -235,6 +232,10 @@ try {
     "/profile",
     "/login",
     "/signup",
+    "/assessment",
+    "/my-plan",
+    "/forgot-password",
+    "/reset-password",
     "/missing-page",
   ];
   for (const lang of ["en", "ar"]) {

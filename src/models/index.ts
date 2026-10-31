@@ -113,4 +113,18 @@ export interface AppData {
   sessions: Partial<Record<Track, SimulationSession>>;
   results: SimulationResult[];
   projects: Project[];
+  planning: import("./planning").PlanningData;
 }
+export type {
+  AssessmentQuestion,
+  AssessmentAnswer,
+  AssessmentDraft,
+  AssessmentSubmission,
+  LearnerProfile,
+  LearningPlan,
+  PlanActivity,
+  PlanGenerationResult,
+  PlanningData,
+  AnswerValue,
+  StartingPoint,
+} from "./planning";

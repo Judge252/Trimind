@@ -1,19 +1,44 @@
-# Phase 1 verification — 31 October 2026
+# TRIMIND Phase 1 extension verification — 31 October 2026
 
-**COMPLETE — local frontend acceptance.**
+**COMPLETE — working local frontend, with backend-dependent services explicitly unavailable.**
 
-| Check | Actual result |
+The existing application was extended in place. Existing course/scenario content and simulation calculations have no source changes. The former three-step onboarding and combined account preview were replaced by the integrated assessment flow and separate account screens.
+
+## Actual final checks
+
+| Check | Result |
 |---|---|
-| Clean install in the requested C: directory | PASS: npm ci, 83 packages |
-| TypeScript + Vite production build | PASS: npm run build; 1,605 modules transformed |
-| Focused domain/repository tests | PASS: 18 tests, zero failures |
-| Chromium browser suite against built production assets | PASS: 24 recorded checks at http://127.0.0.1:4173 |
-| Responsive route matrix | PASS: 23 routes × 2 languages × 3 widths = 138 route inspections |
-| Console/page/asset errors | Zero in the final browser run |
+| TypeScript + Vite production build | PASS — npm run build, 1,616 transformed modules |
+| Focused unit/repository/service tests | PASS — 33 tests, zero failures |
+| Existing feature browser suite | PASS — 24 recorded checks |
+| Assessment/planning/account browser suite | PASS — 15 recorded checks |
+| Existing and added route matrix | PASS — 27 routes × 2 languages × 3 widths = 162 route inspections |
+| Populated assessment/plan/account state matrix | PASS — 10 route/state variants × 2 languages × desktop/320px |
+| Browser exceptions, console errors, failed assets | Zero in final runs |
+| External planning/auth requests | Zero; the adapters run locally |
+| Patch whitespace | PASS — git diff --check |
 
-Widths tested: 1440, 768 and 320 CSS pixels. Screenshots were visually inspected for the English desktop and English/Arabic mobile home page, English desktop Investor and Arabic mobile Founder. All route inspections assert no page-level horizontal overflow. This is Chromium viewport testing, not physical device acceptance.
+Final browser suites ran against **built production assets at http://127.0.0.1:4173** served from the D: workspace. Regression widths: 1440, 768 and 320 CSS pixels. Assessment/account flows also ran in English and Arabic at 1440 and 320. Browser contexts were isolated from the user's existing browser progress.
 
-## Recorded browser checks
+## New journey checks
+
+- PASS: Guest entry, required validation, save/exit/resume, refresh and language preserve draft answers
+- PASS: Twenty-question review → honest local demo plan, unknown knowledge and valid schedule
+- PASS: Plan links to a real lesson/example and actual completion updates plan and dashboard
+- PASS: Confirmed regeneration versions plans and retains completed work
+- PASS: Visible error/retry preserves last valid plan and publishes only a successful retry
+- PASS: Plan history restore and discard confirmation retain completed work and saved plans
+- PASS: Full Arabic 320px assessment produces a meaningfully different durable plan from new answers
+- PASS: Populated plans, assessment and all auth states fit ar 1440px
+- PASS: Populated plans, assessment and all auth states fit en 1440px
+- PASS: Populated plans, assessment and all auth states fit ar 320px
+- PASS: Populated plans, assessment and all auth states fit en 320px
+- PASS: Native radio keyboard controls, previous/next and browser back/forward retain draft state
+- PASS: Account signup, recovery, reset, validation, destination and credential isolation: en
+- PASS: Account signup, recovery, reset, validation, destination and credential isolation: ar
+- PASS: No page/console errors, failed assets or external planning/auth requests
+
+## Existing feature checks
 
 - PASS: Keyboard skip link reachable and moves focus to main
 - PASS: Guest onboarding → fresh zero-progress dashboard
@@ -25,13 +50,13 @@ Widths tested: 1440, 768 and 320 CSS pixels. Screenshots were visually inspected
 - PASS: Builder valid/invalid plans, durable result and explicit save to project
 - PASS: Honest account limitation and no password persistence
 - PASS: Delete confirmation cancel and confirm
-- PASS: All 23 routes render without page overflow: en 1440px
-- PASS: All 23 routes render without page overflow: en 768px
-- PASS: All 23 routes render without page overflow: en 320px
+- PASS: All 27 routes render without page overflow: en 1440px
+- PASS: All 27 routes render without page overflow: en 768px
+- PASS: All 27 routes render without page overflow: en 320px
 - PASS: Mobile navigation: en
-- PASS: All 23 routes render without page overflow: ar 1440px
-- PASS: All 23 routes render without page overflow: ar 768px
-- PASS: All 23 routes render without page overflow: ar 320px
+- PASS: All 27 routes render without page overflow: ar 1440px
+- PASS: All 27 routes render without page overflow: ar 768px
+- PASS: All 27 routes render without page overflow: ar 320px
 - PASS: Mobile navigation: ar
 - PASS: Arabic lesson and five-question quiz end-to-end
 - PASS: 320px Arabic: investor buy/sell and four rounds, Founder four rounds, Builder evaluation and persisted project
@@ -40,23 +65,30 @@ Widths tested: 1440, 768 and 320 CSS pixels. Screenshots were visually inspected
 - PASS: Reset removes only TRIMIND storage
 - PASS: No browser console errors, page exceptions or failed asset responses
 
+## Focused coverage
+
+The 15 new tests cover required/optional and multi-select validation, conditional follow-ups, unknown/scored-answer separation, changed goals/knowledge/presentation, per-session/week limits and activity splitting, exact catalog references, malformed plan records, old version-one migration, locale/draft persistence, version history, duplicate/stale publication, injected service failure, cancellation, completed-work retention, scoped reset, account validation and safe intended destinations. The original 18 tests still cover quizzes, simulation rules/accounting, original persistence and reset.
+
+Cancellation and stale-response rejection were verified at the service/repository layer. The local adapter normally finishes quickly, so a long preparing state was not manufactured for visual testing. Generation failure/retry was also tested through the labelled demo error-preview UI while preserving the last valid plan.
+
 ## Evidence
 
-- Machine-readable result: test-results/browser-report.json
-- Full-page screenshots: test-results/home-{en,ar}-{1440,768,320}.png
-- Dashboard and each simulator: test-results/{route}-{language}-{width}.png (desktop and 320px)
-- Actual text export: test-results/project-export.txt
-- Actual Chromium print output: test-results/project-print.pdf
+- test-results/browser-report.json
+- test-results/planning/browser-report.json
+- test-results/planning/assessment-*-viewport.png
+- test-results/planning/review-*.png
+- test-results/planning/plan-*.png and plan-*-viewport.png
+- test-results/planning/account-reset-*.png
+- Existing simulator/dashboard/home screenshots, exported project text and Chromium print PDF under test-results/
 
-The complete guest → onboarding → lesson → quiz → simulation → project save → refresh journey passed. The final suite also performs Arabic trading, all four Investor and Founder rounds, Builder evaluation, project save/reopen, account-form limitation/no-password-storage, deletion cancellation/confirmation, RTL tab arrows, mobile navigation, direct route refresh, browser back/forward and reset scoping.
+English desktop and Arabic 320px plan screenshots, assessment/review screens and account failure states were visually inspected. Existing simulator/responsive evidence was regenerated.
 
-## Not tested / out of Phase 1 scope
+## Scope and remaining gaps
 
-- No hosted or deployed URL was created or verified.
-- No real authentication, database, online persistence, administration or cross-device sync.
-- No Safari/Firefox run, physical phone test, screen-reader audit or physical printer test.
-- Storage failure/schema recovery are covered by focused repository tests; they were not separately exercised through browser permission settings.
+- Working now: resumable bilingual assessment, answer review, local rules-based plans, real activity links/progress, capacity-limited schedule, plan versions/restore, confirmation and retry/failure handling, account/recovery/reset form validation.
+- No Gemini request ran. No SDK, API key, secret or planning/auth fetch exists in browser source. Repository access remains centralized; only repository.ts accesses localStorage.
+- Real login, signup, recovery delivery, reset-token validation, database ownership, cloud saving, content administration, guest-to-account migration, server-only Gemini and deployment remain Phase 2. No authenticated session or successful email delivery is simulated.
+- No hosted HTTPS acceptance, physical phone, screen-reader audit, Firefox/Safari or physical printer acceptance. Chromium viewport and print-PDF checks are local browser evidence.
+- Browser storage remains local, unencrypted, and designed for a single active tab. Completed work is never reset by plan replacement. The existing key remains trimind:phase1:v1 with an additive planning object.
 
-## Delivery locations
-
-The requested directory contains standalone source, lockfile, installed dependencies and production dist output. The D: workspace contains the same application source and the original pitch deck/reference. Source copies do not automatically synchronize. A temporary trimind-app directory junction in the C: folder points to D:; automatic approval review blocked its optional cleanup, so it was retained. Neither npm scripts nor the standalone build use this link. Existing work and outputs reference directories were preserved.
+Source and production output are in D:\my  business\Trimind. The original C: delivery directory was refreshed with the same source/output while preserving its existing material. Neither location is automatically synchronized for future edits. See PHASE_2_HANDOFF.md for schemas, local rules, service request/response boundaries and migration requirements.

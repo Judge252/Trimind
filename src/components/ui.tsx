@@ -82,10 +82,12 @@ export function Field({
   label,
   children,
   hint,
+  error,
 }: {
   label: string;
   children: ReactNode;
   hint?: string;
+  error?: string;
 }) {
   const id = useId();
   let assigned = false;
@@ -96,6 +98,7 @@ export function Field({
         children?: ReactNode;
         id?: string;
         "aria-describedby"?: string;
+        "aria-invalid"?: boolean;
       }>;
       if (
         !assigned &&
@@ -105,7 +108,11 @@ export function Field({
         assigned = true;
         return cloneElement(element, {
           id,
-          "aria-describedby": hint ? `${id}-hint` : undefined,
+          "aria-describedby":
+            [hint ? `${id}-hint` : "", error ? `${id}-error` : ""]
+              .filter(Boolean)
+              .join(" ") || undefined,
+          "aria-invalid": !!error,
         });
       }
       return element.props.children
@@ -117,6 +124,11 @@ export function Field({
       <label htmlFor={id}>{label}</label>
       {connect(children)}
       {hint && <small id={`${id}-hint`}>{hint}</small>}
+      {error && (
+        <small className="field-error" id={`${id}-error`}>
+          {error}
+        </small>
+      )}
     </div>
   );
 }

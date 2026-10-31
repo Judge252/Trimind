@@ -1,6 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Eye, EyeOff } from "lucide-react";
 import { useApp } from "../app/context";
 import { courses } from "../content/courses";
 import { tracks } from "../content/scenarios";
@@ -8,7 +7,6 @@ import { recommend, courseProgress } from "../logic/learning";
 import { repository } from "../services/repository";
 import {
   Button,
-  Empty,
   Field,
   Go,
   Metric,
@@ -17,144 +15,8 @@ import {
   Progress,
   Status,
   TrackPill,
-  TrackSelect,
 } from "../components/ui";
-import type { Goal, Experience } from "../models";
-export function Onboarding() {
-  const { data, t, text, act } = useApp();
-  const navigate = useNavigate();
-  const [step, setStep] = useState(0),
-    [p, setP] = useState(data.preferences);
-  const rec = recommend(courses, p);
-  const finish = async () => {
-    await act(repository.savePreferences({ ...p, onboarded: true }));
-    navigate("/dashboard");
-  };
-  const goals = [
-    ["explore", t("Explore something new", "استكشف شيئاً جديداً")],
-    ["create", t("Create a practical project", "أنشئ مشروعاً عملياً")],
-    ["money", t("Understand money decisions", "افهم القرارات المالية")],
-  ];
-  return (
-    <Page
-      title={t("A starting point that feels like you.", "نقطة بداية تناسبك.")}
-      description={t(
-        "Three short steps. You can change these anytime in your profile.",
-        "ثلاث خطوات قصيرة. يمكنك تغييرها لاحقاً في ملفك.",
-      )}
-    >
-      <div className="onboarding">
-        <Progress
-          value={step + 1}
-          max={3}
-          label={t("Getting started", "البداية")}
-        />
-        {step === 0 ? (
-          <fieldset className="choices">
-            <legend className="question-title">
-              {t("What brings you here?", "ما الذي جاء بك إلى هنا؟")}
-            </legend>
-            {goals.map(([id, label]) => (
-              <label
-                className={`choice ${p.goal === id ? "selected" : ""}`}
-                key={id}
-              >
-                <input
-                  type="radio"
-                  name="goal"
-                  checked={p.goal === id}
-                  onChange={() =>
-                    setP({
-                      ...p,
-                      goal: id as Goal,
-                      track:
-                        id === "money"
-                          ? "investor"
-                          : id === "create"
-                            ? "founder"
-                            : p.track,
-                    })
-                  }
-                />
-                {label}
-              </label>
-            ))}
-          </fieldset>
-        ) : step === 1 ? (
-          <fieldset className="choices">
-            <legend className="question-title">
-              {t("How familiar does this feel?", "ما مدى خبرتك؟")}
-            </legend>
-            {[
-              ["new", t("I’m starting fresh", "أبدأ من الصفر")],
-              ["some", t("I know a little", "لدي معرفة بسيطة")],
-              [
-                "practiced",
-                t("I’ve tried a project before", "جرّبت مشروعاً من قبل"),
-              ],
-            ].map(([id, label]) => (
-              <label
-                className={`choice ${p.experience === id ? "selected" : ""}`}
-                key={id}
-              >
-                <input
-                  type="radio"
-                  name="experience"
-                  checked={p.experience === id}
-                  onChange={() => setP({ ...p, experience: id as Experience })}
-                />
-                {label}
-              </label>
-            ))}
-          </fieldset>
-        ) : (
-          <>
-            <TrackSelect
-              value={p.track}
-              onChange={(track) => setP({ ...p, track })}
-            />
-            <div className="panel">
-              <span className="eyebrow">
-                {t("YOUR SUGGESTED FIRST COURSE", "دورتك الأولى المقترحة")}
-              </span>
-              <h3>{text(rec.title)}</h3>
-              <p>
-                {t(
-                  "We recommend the beginner course matching your chosen path. Your experience helps you choose your pace; it does not lock content.",
-                  "نقترح دورة المبتدئين المطابقة لمسارك المختار. خبرتك تساعدك على اختيار الإيقاع ولا تقفل أي محتوى.",
-                )}
-              </p>
-            </div>
-          </>
-        )}
-        <div className="actions">
-          {step > 0 && (
-            <Button variant="secondary" onClick={() => setStep(step - 1)}>
-              {t("Back", "رجوع")}
-            </Button>
-          )}
-          <Button
-            onClick={() => (step < 2 ? setStep(step + 1) : void finish())}
-          >
-            {t(
-              step < 2 ? "Continue" : "Go to My learning",
-              step < 2 ? "تابع" : "انتقل إلى تعلّمي",
-            )}
-          </Button>
-          <Button variant="text" onClick={() => void finish()}>
-            {t("Skip for now", "تخطَّ الآن")}
-          </Button>
-        </div>
-        <p className="meta">
-          {t(
-            "Guest demo · Progress is stored on this browser only.",
-            "عرض ضيف · التقدم محفوظ على هذا المتصفح فقط.",
-          )}
-        </p>
-      </div>
-    </Page>
-  );
-}
+import { PlanDashboard, PlanProfileSummary } from "./planning/MyPlan";
 export function Dashboard() {
   const { data, t, text } = useApp();
   const c = recommend(courses, data.preferences),
@@ -201,6 +63,7 @@ export function Dashboard() {
         </Go>
       }
     >
+      <PlanDashboard />
       <div className="metrics">
         <Metric
           label={t("Lessons complete", "دروس مكتملة")}
@@ -301,6 +164,10 @@ export function Profile() {
   const [p, setP] = useState(data.preferences),
     [reset, setReset] = useState(false);
   const navigate = useNavigate();
+  useEffect(
+    () => setP((prev) => ({ ...prev, language: data.preferences.language })),
+    [data.preferences.language],
+  );
   return (
     <Page
       title={t("Your learning, your way.", "تعلّمك بطريقتك.")}
@@ -310,12 +177,19 @@ export function Profile() {
         "هذا ملف ضيف. المعلومات على هذا المتصفح وليست محفوظة على الإنترنت.",
       )}
     >
+      <PlanProfileSummary />
       <div className="content-sidebar">
         <form
           className="panel"
           onSubmit={async (e) => {
             e.preventDefault();
-            await act(repository.savePreferences(p));
+            await act(
+              repository.savePreferences({
+                ...data.preferences,
+                name: p.name,
+                language: p.language,
+              }),
+            );
             toast(t("Preferences saved.", "حُفظت التفضيلات."));
           }}
         >
@@ -332,49 +206,15 @@ export function Profile() {
               onChange={(e) => setP({ ...p, name: e.target.value })}
             />
           </Field>
-          <Field label={t("Your goal", "هدفك")}>
-            <select
-              value={p.goal}
-              onChange={(e) =>
-                setP({ ...p, goal: e.target.value as typeof p.goal })
-              }
-            >
-              <option value="explore">
-                {t("Explore something new", "استكشف شيئاً جديداً")}
-              </option>
-              <option value="create">
-                {t("Create a project", "أنشئ مشروعاً")}
-              </option>
-              <option value="money">
-                {t("Understand money", "افهم المال")}
-              </option>
-            </select>
-          </Field>
-          <Field label={t("Experience", "الخبرة")}>
-            <select
-              value={p.experience}
-              onChange={(e) =>
-                setP({
-                  ...p,
-                  experience: e.target.value as typeof p.experience,
-                })
-              }
-            >
-              <option value="new">
-                {t("Starting fresh", "أبدأ من الصفر")}
-              </option>
-              <option value="some">
-                {t("A little experience", "خبرة بسيطة")}
-              </option>
-              <option value="practiced">
-                {t("Tried a project", "جرّبت مشروعاً")}
-              </option>
-            </select>
-          </Field>
-          <TrackSelect
-            value={p.track}
-            onChange={(track) => setP({ ...p, track })}
-          />
+          <p>
+            {t(
+              "Goals, paths, experience and time are edited once in your assessment. Update them there to prepare a new plan version.",
+              "تُعدّل الأهداف والمسارات والخبرة والوقت في التقييم فقط. حدّثها هناك لإعداد نسخة جديدة من الخطة.",
+            )}
+          </p>
+          <Go secondary to="/assessment">
+            {t("Edit assessment", "تعديل التقييم")}
+          </Go>
           <Field label={t("Language", "اللغة")}>
             <select
               value={p.language}
@@ -474,134 +314,6 @@ export function Profile() {
           )}
         </Modal>
       )}
-    </Page>
-  );
-}
-export function Account({ signup = false }: { signup?: boolean }) {
-  const { t } = useApp();
-  const [email, setEmail] = useState(""),
-    [password, setPassword] = useState(""),
-    [visible, setVisible] = useState(false),
-    [status, setStatus] = useState(""),
-    [invalid, setInvalid] = useState(false);
-  return (
-    <Page
-      title={
-        signup
-          ? t("A space for what’s next.", "مساحة لما هو قادم.")
-          : t("Welcome to TRIMIND.", "أهلاً بك في تريمايند.")
-      }
-      description={t(
-        "Real accounts are coming in Phase 2. Explore everything now as a guest.",
-        "الحسابات الحقيقية قادمة في المرحلة الثانية. استكشف كل شيء الآن كضيف.",
-      )}
-    >
-      <div className="account-layout">
-        <form
-          className="panel"
-          noValidate
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (
-              !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ||
-              password.length < 8
-            ) {
-              setInvalid(true);
-              setStatus(
-                t(
-                  "Enter a valid email and a password of at least 8 characters.",
-                  "أدخل بريداً إلكترونياً صالحاً وكلمة مرور من 8 أحرف على الأقل.",
-                ),
-              );
-              return;
-            }
-            setInvalid(false);
-            setStatus(
-              t(
-                "Accounts are not available in Phase 1. No authentication was performed and no credentials were saved. Continue as a guest.",
-                "الحسابات غير متاحة في المرحلة الأولى. لم يتم تسجيل دخول أو حفظ بيانات اعتماد. تابع كضيف.",
-              ),
-            );
-            setPassword("");
-          }}
-        >
-          <h2>
-            {signup
-              ? t("Create an account", "إنشاء حساب")
-              : t("Log in", "تسجيل الدخول")}
-          </h2>
-          <Status>
-            {t(
-              "Phase 2 preview — this form cannot create or access an account.",
-              "معاينة المرحلة الثانية — لا ينشئ هذا النموذج حساباً ولا يتيح الوصول إليه.",
-            )}
-          </Status>
-          <Field label={t("Email", "البريد الإلكتروني")}>
-            <input
-              type="email"
-              required
-              value={email}
-              autoComplete="off"
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </Field>
-          <Field
-            label={t("Password", "كلمة المرور")}
-            hint={t(
-              "At least 8 characters. Do not use a real password in this preview.",
-              "8 أحرف على الأقل. لا تستخدم كلمة مرور حقيقية في المعاينة.",
-            )}
-          >
-            <span className="password-wrap">
-              <input
-                aria-label={t("Password", "كلمة المرور")}
-                type={visible ? "text" : "password"}
-                minLength={8}
-                required
-                value={password}
-                autoComplete="new-password"
-                onChange={(e) => setPassword(e.target.value)}
-              />
-              <button
-                type="button"
-                className="icon-button"
-                aria-label={
-                  visible
-                    ? t("Hide password", "إخفاء كلمة المرور")
-                    : t("Show password", "إظهار كلمة المرور")
-                }
-                onClick={() => setVisible(!visible)}
-              >
-                {visible ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
-            </span>
-          </Field>
-          <Button variant="secondary" type="submit">
-            {t("Check account availability", "تحقق من توفر الحساب")}
-          </Button>
-          {status && <Status error={invalid}>{status}</Status>}
-          <p>
-            <Link to={signup ? "/login" : "/signup"}>
-              {signup
-                ? t("Log in preview", "معاينة تسجيل الدخول")
-                : t("Sign up preview", "معاينة إنشاء حساب")}
-            </Link>
-          </p>
-        </form>
-        <div>
-          <span className="brand-flower">✳</span>
-          <h2>
-            {t("Curiosity needs no password.", "الفضول لا يحتاج كلمة مرور.")}
-          </h2>
-          <p>
-            {t(
-              "Lessons, simulators and project drafts are open to every guest. Progress stays on this browser.",
-              "الدروس والمحاكيات ومسودات المشاريع متاحة لكل ضيف. يبقى التقدم على هذا المتصفح.",
-            )}
-          </p>
-          <Go to="/start">{t("Continue as guest", "المتابعة كضيف")}</Go>
-        </div>
-      </div>
     </Page>
   );
 }

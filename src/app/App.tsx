@@ -39,7 +39,13 @@ function Shell() {
       el?.setAttribute("tabindex", "-1");
       el?.focus({ preventScroll: true });
     });
-  }, [location.pathname]);
+    if (location.hash)
+      requestAnimationFrame(() =>
+        document
+          .getElementById(location.hash.slice(1))
+          ?.scrollIntoView({ block: "start" }),
+      );
+  }, [location.pathname, location.hash, ready]);
   useEffect(() => {
     const escape = (e: KeyboardEvent) => {
       if (e.key === "Escape") setMenu(false);
@@ -77,6 +83,7 @@ function Shell() {
               ["/learn", t("Learn", "تعلّم")],
               ["/practice", t("Practice", "تدرّب")],
               ["/projects", t("Projects", "المشاريع")],
+              ["/my-plan", t("My plan", "خطتي")],
             ].map(([to, label]) => (
               <NavLink key={to} to={to} end={to === "/"}>
                 {label}
@@ -147,8 +154,8 @@ function Shell() {
                       "تخزين المتصفح غير متاح. يمكنك المتابعة لكن التغييرات ستفقد عند إغلاق الصفحة.",
                     )
                   : t(
-                      "Unreadable saved data was found. A fresh demo has been loaded. Saving will replace only TRIMIND data.",
-                      "عُثر على بيانات غير قابلة للقراءة. تم تحميل عرض جديد. الحفظ سيستبدل بيانات تريمايند فقط.",
+                      "Some saved data could not be read. Valid progress is kept where possible. Saving affects only TRIMIND data.",
+                      "تعذرت قراءة بعض البيانات. يُحتفظ بالتقدم الصالح قدر الإمكان. يؤثر الحفظ على بيانات تريمايند فقط.",
                     )}
               </Status>
             </div>

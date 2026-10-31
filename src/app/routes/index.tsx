@@ -1,4 +1,4 @@
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import Home from "../../features/Home";
 import {
   CoursePage,
@@ -7,12 +7,7 @@ import {
   NotFound,
   QuizPage,
 } from "../../features/Learning";
-import {
-  Account,
-  Dashboard,
-  Onboarding,
-  Profile,
-} from "../../features/Learner";
+import { Dashboard, Profile } from "../../features/Learner";
 import {
   Builder,
   Founder,
@@ -21,12 +16,17 @@ import {
 } from "../../features/Simulators";
 import { Projects, ProjectWorkspace } from "../../features/Projects";
 
+import Assessment from "../../features/planning/Assessment";
+import MyPlan from "../../features/planning/MyPlan";
+import Account from "../../features/Account";
 export default function AppRoutes() {
   const location = useLocation();
   return (
     <Routes location={location} key={location.pathname}>
       <Route path="/" element={<Home />} />
-      <Route path="/start" element={<Onboarding />} />
+      <Route path="/start" element={<Navigate to="/assessment" replace />} />
+      <Route path="/assessment" element={<Assessment />} />
+      <Route path="/my-plan" element={<MyPlan />} />
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/learn" element={<Library />} />
       <Route path="/learn/:courseId" element={<CoursePage />} />
@@ -39,8 +39,10 @@ export default function AppRoutes() {
       <Route path="/projects" element={<Projects />} />
       <Route path="/projects/:projectId" element={<ProjectWorkspace />} />
       <Route path="/profile" element={<Profile />} />
-      <Route path="/login" element={<Account />} />
-      <Route path="/signup" element={<Account signup />} />
+      <Route path="/login" element={<Account mode="login" />} />
+      <Route path="/signup" element={<Account mode="signup" />} />
+      <Route path="/forgot-password" element={<Account mode="recovery" />} />
+      <Route path="/reset-password" element={<Account mode="reset" />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

@@ -61,8 +61,8 @@ export default function Home() {
               "مشروعات توضيحية أصلية. أفكارك تأتي بعدها.",
             )}
           </span>
-          <Link to="/learn">
-            {t("Find your starting point", "اكتشف نقطة بدايتك")}{" "}
+          <Link to="/assessment">
+            {t("Personalise my learning", "خصّص تعلّمي")}{" "}
             <ArrowRight size={18} />
           </Link>
         </div>

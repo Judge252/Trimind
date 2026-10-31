@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import {
+  Link,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
 import { Download, Printer } from "lucide-react";
 import { useApp } from "../app/context";
 import { repository } from "../services/repository";
@@ -18,9 +23,15 @@ import { NotFound } from "./Learning";
 import type { Project, Track } from "../models";
 export function Projects() {
   const { data, t, text, act } = useApp();
+  const [params] = useSearchParams();
+  const requested = params.get("track");
   const [create, setCreate] = useState(false),
     [title, setTitle] = useState(""),
-    [track, setTrack] = useState<Track>(data.preferences.track),
+    [track, setTrack] = useState<Track>(
+      requested && ["builder", "founder", "investor"].includes(requested)
+        ? (requested as Track)
+        : data.preferences.track,
+    ),
     [busy, setBusy] = useState(false);
   const navigate = useNavigate();
   return (

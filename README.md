@@ -1,6 +1,6 @@
 # TRIMIND — Phase 1
 
-A complete bilingual React + TypeScript + Vite guest demo. Practical learning across Builder, Founder and Investor, with original illustrated project previews, nine lessons, fifteen quiz questions, three deterministic simulators and editable local project drafts.
+A complete bilingual React + TypeScript + Vite guest demo. Practical learning across Builder, Founder and Investor, with original illustrated project previews, nine lessons, fifteen quiz questions, three deterministic simulators, editable local project drafts, a bilingual learner assessment and deterministic personal demo plans.
 
 ## Run
 
@@ -28,15 +28,16 @@ Browser acceptance requires a locally installed Playwright Chromium. With the ap
 ```powershell
 npx playwright install chromium
 npm run test:browser
+npm run test:planning-browser
 ```
 
 `TRIMIND_URL` can point the browser suite to a production preview instead of the default dev URL. Browser artifacts are written to `test-results/` and are ignored by Git. Production output is `dist/`; use `npm run preview` to serve it. Do not open `dist/index.html` with a file URL.
 
 ## Judge walkthrough
 
-1. Home → Try the demo → choose a goal, experience and path → My learning.
+1. Home → Personalise my learning / Try the demo → assessment → review → demo plan → My learning. You can also browse as a guest without assessment.
 2. Complete a lesson and take its five-question quiz. The three courses are all open; prerequisites do not block exploration.
-3. Practice → select a simulator. Its rules and numbers are visible, fictional and repeatable.
+3. My plan shows the next real activity, knowledge summary, schedule and actual progress. Edit answers or regenerate with confirmation; older versions and completed work remain. Practice → select a simulator. Its rules and numbers are visible, fictional and repeatable.
 4. Save a recap or an MVP plan explicitly to a project. Edit the draft, save, refresh, then download text or print the preview.
 5. Profile shows recorded activity and preferences. Reset requires confirmation and removes only `trimind:phase1:v1`.
 

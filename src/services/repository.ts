@@ -7,8 +7,18 @@ import type {
   SimulationResult,
   Project,
   Course,
+  AssessmentDraft,
+  AssessmentSubmission,
+  PlanGenerationResult,
 } from "../models";
 import { courses } from "../content/courses";
+import {
+  emptyPlanning,
+  hydratePlanning,
+  validDraft,
+  validSubmission,
+} from "./planning-storage";
+import { validatePlanResult } from "../logic/planning";
 export const STORAGE_KEY = "trimind:phase1:v1";
 export const defaults = (): AppData => ({
   version: 1,
@@ -25,6 +35,7 @@ export const defaults = (): AppData => ({
   sessions: {},
   results: [],
   projects: [],
+  planning: emptyPlanning(),
 });
 export interface Repository {
   read(): Promise<AppData>;
@@ -38,6 +49,13 @@ export interface Repository {
   ): Promise<AppData>;
   saveProject(p: Project): Promise<AppData>;
   deleteProject(id: string): Promise<AppData>;
+  saveAssessment(draft: AssessmentDraft): Promise<AppData>;
+  discardAssessment(): Promise<AppData>;
+  saveGeneratedPlan(
+    submission: AssessmentSubmission,
+    result: PlanGenerationResult,
+  ): Promise<AppData>;
+  activatePlan(id: string): Promise<AppData>;
   reset(): Promise<AppData>;
 }
 export type StorageLike = Pick<Storage, "getItem" | "setItem" | "removeItem">;
@@ -202,7 +220,11 @@ export class LocalRepository implements Repository {
           } catch {
             this.status = "malformed";
           }
-          if (validData(parsed)) this.data = parsed;
+          if (validData(parsed))
+            this.data = {
+              ...parsed,
+              planning: hydratePlanning(parsed.planning),
+            };
           else this.status = "malformed";
         }
         if (!this.storage) this.status = "unavailable";
@@ -263,6 +285,70 @@ export class LocalRepository implements Repository {
   deleteProject(id: string) {
     return this.update((d) => {
       d.projects = d.projects.filter((p) => p.id !== id);
+    });
+  }
+  saveAssessment(draft: AssessmentDraft) {
+    return this.update((d) => {
+      if (!validDraft(draft)) throw Error("invalid-assessment");
+      d.planning.draft = structuredClone(draft);
+    });
+  }
+  discardAssessment() {
+    return this.update((d) => {
+      delete d.planning.draft;
+    });
+  }
+  saveGeneratedPlan(
+    submission: AssessmentSubmission,
+    result: PlanGenerationResult,
+  ) {
+    return this.update((d) => {
+      if (
+        !validSubmission(submission) ||
+        !validatePlanResult(result, courses) ||
+        result.learningPlan.assessmentId !== submission.id
+      )
+        throw Error("invalid-plan");
+      const current = d.planning.draft;
+      if (
+        !current ||
+        current.id !== submission.draftId ||
+        current.revision !== submission.draftRevision
+      )
+        throw Error("stale-assessment");
+      const duplicate = d.planning.plans.find(
+        (p) => p.learningPlan.assessmentId === submission.id,
+      );
+      if (duplicate) {
+        d.planning.activePlanId = duplicate.learningPlan.id;
+        return;
+      }
+      const saved = structuredClone(result);
+      saved.learningPlan.version =
+        Math.max(0, ...d.planning.plans.map((p) => p.learningPlan.version)) + 1;
+      d.planning.submissions.push(structuredClone(submission));
+      d.planning.plans.push(saved);
+      d.planning.activePlanId = saved.learningPlan.id;
+      d.preferences.track = saved.learnerProfile.primaryPath;
+      d.preferences.goal =
+        saved.learnerProfile.goal === "money"
+          ? "money"
+          : saved.learnerProfile.goal === "explore"
+            ? "explore"
+            : "create";
+      const exp =
+        submission.answers[`experience-${d.preferences.track}`]?.value;
+      if (exp === "new" || exp === "some" || exp === "practiced")
+        d.preferences.experience = exp;
+      d.preferences.onboarded = true;
+    });
+  }
+  activatePlan(id: string) {
+    return this.update((d) => {
+      const plan = d.planning.plans.find((p) => p.learningPlan.id === id);
+      if (!plan) throw Error("invalid-plan");
+      d.planning.activePlanId = id;
+      d.preferences.track = plan.learnerProfile.primaryPath;
     });
   }
   async reset() {

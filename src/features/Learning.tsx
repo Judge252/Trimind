@@ -212,12 +212,13 @@ export function LessonPage() {
           {l.paragraphs.map((p, i) => (
             <p key={i}>{text(p)}</p>
           ))}
-          <div className="worked-example">
+          <div className="worked-example" id="worked-example">
             <span className="eyebrow">{t("WORKED EXAMPLE", "مثال محلول")}</span>
             <p>{text(l.example)}</p>
           </div>
           <form
             className="panel"
+            id="knowledge-check"
             onSubmit={(e) => {
               e.preventDefault();
               setChecked(true);
