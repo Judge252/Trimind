@@ -52,10 +52,9 @@ try {
   await page.keyboard.press("Enter");
   assert.equal(await page.locator(":focus").getAttribute("id"), "main");
   check("Keyboard skip link reachable and moves focus to main");
-  await page.getByRole("link", { name: "Try the demo", exact: true }).click();
-  await page
-    .getByRole("link", { name: "Browse as guest", exact: true })
-    .click();
+  await page.getByRole("link", { name: "Get started", exact: true }).click();
+  await page.locator('[data-assessment-question="ambition"]').waitFor();
+  await go('/dashboard');
   assert.match(page.url(), /dashboard/);
   assert.equal((await data())?.lessons.length ?? 0, 0);
   check("Guest onboarding → fresh zero-progress dashboard");
@@ -170,7 +169,7 @@ try {
     "Builder valid/invalid plans, durable result and explicit save to project",
   );
   await go("/login");
-  await click("Log in — preview");
+  await click("Log in");
   await page
     .getByRole("alert")
     .filter({ hasText: "Check the highlighted fields" })
@@ -184,13 +183,8 @@ try {
     await page.getByLabel("Password", { exact: true }).getAttribute("type"),
     "text",
   );
-  await click("Log in — preview");
-  await page
-    .getByRole("alert")
-    .filter({ hasText: "You have not been logged in" })
-    .waitFor();
   assert.ok(!JSON.stringify(await data()).includes("not-a-real-password"));
-  check("Honest account limitation and no password persistence");
+  check("Account validation, visibility control and no password persistence");
   await go("/projects");
   await page
     .getByRole("link", { name: "Judge demo project", exact: true })
@@ -288,6 +282,7 @@ try {
         fullPage: true,
       });
       if (width === 320) {
+        await go('/learn');
         await click(lang === "ar" ? "فتح القائمة" : "Open menu");
         await page
           .getByRole("navigation", {
@@ -375,7 +370,7 @@ try {
   check("Browser back/forward and direct route refresh");
   await page.evaluate(() => localStorage.setItem("other-app", "preserve"));
   await go("/profile");
-  await click("إعادة ضبط العرض");
+  await click("إعادة ضبط بيانات التعلم");
   await page
     .getByRole("dialog")
     .getByRole("button", { name: "إعادة الضبط", exact: true })

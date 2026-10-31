@@ -39,8 +39,8 @@ export function Projects() {
       title={t("A home for your next idea.", "بيت لفكرتك القادمة.")}
       eyebrow={t("YOUR PROJECTS", "مشاريعك")}
       description={t(
-        "Local drafts, ready to grow. No community posts or public sharing.",
-        "مسودات محلية جاهزة للتطور. لا منشورات عامة أو مشاركة علنية.",
+        "Private drafts, ready to grow. Bring your ideas and practical decisions together.",
+        "مسودات خاصة جاهزة للتطور. اجمع أفكارك وقراراتك العملية في مكان واحد.",
       )}
       actions={
         <Button onClick={() => setCreate(!create)}>
@@ -69,8 +69,13 @@ export function Projects() {
               features: [],
               updatedAt: new Date().toISOString(),
             };
-            await act(repository.saveProject(p));
-            navigate(`/projects/${p.id}`);
+            try {
+              await act(repository.saveProject(p));
+              navigate(`/projects/${p.id}`);
+            } catch {
+            } finally {
+              setBusy(false);
+            }
           }}
         >
           <Field label={t("Project title", "عنوان المشروع")}>
@@ -139,8 +144,8 @@ export function Projects() {
           }
         >
           {t(
-            "Start a blank project, or bring a decision from a simulator. Your work stays on this browser.",
-            "ابدأ مشروعاً فارغاً أو انقل قراراً من محاكي. يبقى عملك على هذا المتصفح.",
+            "Start a blank project, or bring a decision from a simulator. Sign in to keep your work across devices.",
+            "ابدأ مشروعاً فارغاً أو انقل قراراً من محاكي. سجّل الدخول لحفظ عملك عبر الأجهزة.",
           )}
         </Empty>
       )}
@@ -174,16 +179,20 @@ export function ProjectWorkspace() {
   const save = async () => {
     if (!draft.title.trim() || busy) return;
     setBusy(true);
-    await act(
-      repository.saveProject({
-        ...draft,
-        title: draft.title.trim(),
-        updatedAt: new Date().toISOString(),
-      }),
-    );
-    setDirty(false);
-    setSaved(true);
-    setBusy(false);
+    try {
+      await act(
+        repository.saveProject({
+          ...draft,
+          title: draft.title.trim(),
+          updatedAt: new Date().toISOString(),
+        }),
+      );
+      setDirty(false);
+      setSaved(true);
+    } catch {
+    } finally {
+      setBusy(false);
+    }
   };
   const entries = [
     [t("Problem", "المشكلة"), draft.problem],
@@ -195,7 +204,7 @@ export function ProjectWorkspace() {
   const download = () => {
     const blob = new Blob(
       [
-        `${draft.title}\n${text(tracks[draft.track].name)}\n\n${entries.map(([h, v]) => `${h}\n${v || "—"}`).join("\n\n")}\n\n${t("TRIMIND guest project draft. Simulation outputs are fictional.", "مسودة مشروع ضيف تريمايند. نتائج المحاكاة خيالية.")}`,
+        `${draft.title}\n${text(tracks[draft.track].name)}\n\n${entries.map(([h, v]) => `${h}\n${v || "—"}`).join("\n\n")}\n\n${t("TRIMIND project draft. Simulation outputs are fictional.", "مسودة مشروع تريمايند. نتائج المحاكاة خيالية.")}`,
       ],
       { type: "text/plain;charset=utf-8" },
     );
@@ -305,10 +314,10 @@ export function ProjectWorkspace() {
             {dirty
               ? t("Unsaved changes", "تغييرات غير محفوظة")
               : saved
-                ? t("Saved on this browser", "محفوظ على هذا المتصفح")
+                ? t("Project saved", "تم حفظ المشروع")
                 : t(
-                    "Draft loaded from this browser",
-                    "تم تحميل المسودة من هذا المتصفح",
+                    "Saved draft loaded",
+                    "تم تحميل المسودة المحفوظة",
                   )}
           </Status>
         </form>
@@ -363,8 +372,8 @@ export function ProjectWorkspace() {
           }}
         >
           {t(
-            "This draft will be removed from this browser. This cannot be undone.",
-            "ستُحذف هذه المسودة من المتصفح. لا يمكن التراجع عن ذلك.",
+            "This saved project will be deleted. This cannot be undone.",
+            "سيُحذف هذا المشروع المحفوظ. لا يمكن التراجع عن ذلك.",
           )}
         </Modal>
       )}

@@ -1,5 +1,5 @@
-import { bi } from "./courses";
-import type { AssessmentQuestion, Localized, Track } from "../models";
+import { bi } from "./courses.js";
+import type { AssessmentQuestion, Localized, Track } from "../models/index.js";
 export const sections = {
   goals: bi("A. Goals and practical constraints", "أ. الأهداف والوقت المتاح"),
   knowledge: bi("B. Starting knowledge", "ب. المعرفة المبدئية"),
@@ -52,7 +52,7 @@ const knowledge = (
   hint,
   ...(followUp ? { followUpFor: track } : {}),
 });
-export const assessmentQuestions: AssessmentQuestion[] = [
+export const legacyAssessmentQuestions: AssessmentQuestion[] = [
   preference(
     "goal",
     bi(
@@ -447,3 +447,21 @@ export const assessmentQuestions: AssessmentQuestion[] = [
     true,
   ),
 ];
+
+// Version 2 asks seven questions. Version 1 remains intact for saved learners.
+const discovery = (id: string, en: string, ar: string, items: [string,string,string][]) => preference(id,bi(en,ar),'single',items);
+export const discoveryQuestions: AssessmentQuestion[] = [
+  {...legacyAssessmentQuestions[0], id:'ambition', title:bi('What would you like to achieve?','ماذا تريد أن تحقق؟')},
+  discovery('experience','How familiar are you with your preferred area?','ما مدى معرفتك بالمجال الذي تفضّله؟',[
+    ['new','Completely new','أبدأ من الصفر'],['basics','Know the basics','أعرف الأساسيات'],['tried','Tried a few things','جرّبت بعض الأشياء'],['practical','Have practical experience','لدي خبرة عملية']]),
+  discovery('motivation','Why do you want to learn?','لماذا تريد أن تتعلّم؟',[
+    ['build','Build something','لأبني شيئاً'],['career','Prepare for a career','لأستعد لمساري المهني'],['confidence','Become financially confident','لأفهم قراراتي المالية'],['explore','Explore opportunities','لأستكشف الفرص']]),
+  discovery('preference','What helps you learn best?','ما الذي يساعدك على التعلّم؟',[
+    ['reading','Short lessons','دروس قصيرة'],['practice','Interactive challenges','تحديات تفاعلية'],['simulation','Realistic simulations','محاكاة واقعية'],['project','Building projects','بناء المشاريع']]),
+  discovery('availability','What fits your week realistically?','ما الوقت الذي يناسب أسبوعك واقعياً؟',[
+    ['light','20 minutes × 2 days · 40 min/week','20 دقيقة × يومين · 40 دقيقة أسبوعياً'],['steady','30 minutes × 3 days · 90 min/week','30 دقيقة × 3 أيام · 90 دقيقة أسبوعياً'],['focused','45 minutes × 4 days · 3 hours/week','45 دقيقة × 4 أيام · 3 ساعات أسبوعياً']]),
+  ...['builder-task','founder-discovery','investor-risk'].map(id=>({...legacyAssessmentQuestions.find(q=>q.id===id)!,id:'discovery-'+id, hint:bi('A starting-point check, not a proficiency test. It is fine to be unsure.','سؤال لتحديد البداية وليس اختبار إتقان. لا بأس إن لم تكن متأكداً.')})),
+  {...discovery('challenge','What usually stops your progress?','ما الذي يعوق تقدمك عادةً؟',[
+    ['start','Don’t know where to start','لا أعرف من أين أبدأ'],['information','Too much information','كثرة المعلومات'],['practice','Lack of practical experience','قلة الخبرة العملية'],['consistency','Difficulty staying consistent','صعوبة الاستمرار']]),section:'support' as const},
+];
+export const assessmentQuestions = [...legacyAssessmentQuestions,...discoveryQuestions];

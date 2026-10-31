@@ -1,3 +1,5 @@
+import { currentUser } from "../services/session";
+import type { SimulationAction } from "../models/actions";
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "../app/context";
@@ -19,7 +21,7 @@ import {
   evaluateBuilder,
   SimulationError,
 } from "../logic/simulations";
-import { repository } from "../services/repository";
+import { repository, remote } from "../services/repository";
 import type {
   BuilderState,
   FounderState,
@@ -65,11 +67,38 @@ function useSimulation(track: Track) {
   const save = async (
     state: SimulationSession["state"],
     summary?: Record<string, number | string>,
+    action?: SimulationAction,
   ) => {
     if (lock.current) return;
     lock.current = true;
     setBusy(true);
     try {
+      if (currentUser()) {
+        const decision =
+          action ||
+          (track === "builder"
+            ? (state as BuilderState).evaluated
+              ? { type: "builder-evaluate" }
+              : (session.state as BuilderState).evaluated
+                ? { type: "builder-revise" }
+                : {
+                    type: "builder-choices",
+                    features: (state as BuilderState).features,
+                    technical: (state as BuilderState).technical,
+                  }
+            : undefined);
+        if (!decision) throw Error("decision-required");
+        const result = await remote.simulationAction({
+          track,
+          sessionId: session.id,
+          expectedRevision: session.revision || 0,
+          action: decision,
+        });
+        await act(Promise.resolve(result));
+        setSession(result.sessions[track]!);
+        setError("");
+        return;
+      }
       const next = {
         ...session,
         state,
@@ -90,6 +119,13 @@ function useSimulation(track: Track) {
       );
       setSession(next);
       setError("");
+    } catch {
+      setError(
+        t(
+          "Unable to apply this decision. Refresh to check the current session and try again.",
+          "تعذر تطبيق القرار. حدّث الصفحة للتحقق من الجلسة وحاول مجدداً.",
+        ),
+      );
     } finally {
       lock.current = false;
       setBusy(false);
@@ -102,6 +138,24 @@ function useSimulation(track: Track) {
       state: initial(track),
       finalized: false,
     };
+    if (currentUser()) {
+      try {
+        const data = await remote.simulationAction({
+          track,
+          sessionId: session.id,
+          expectedRevision: session.revision || 0,
+          action: { type: "reset" },
+        });
+        await act(Promise.resolve(data));
+        setSession(data.sessions[track]!);
+        setReset(false);
+      } catch {
+        setError(
+          t("Unable to reset. Try again.", "تعذرت إعادة الضبط. حاول مجدداً."),
+        );
+      }
+      return;
+    }
     await act(repository.saveSession(next));
     setSession(next);
     setReset(false);
@@ -195,14 +249,19 @@ function useSaveProject() {
       updatedAt: new Date().toISOString(),
       ...fields,
     };
-    await act(repository.saveProject(p));
-    toast(
-      t(
-        "Project draft created from your decision.",
-        "أُنشئت مسودة مشروع من قرارك.",
-      ),
-    );
-    navigate(`/projects/${p.id}`);
+    try {
+      await act(repository.saveProject(p));
+      toast(
+        t(
+          "Project draft created from your decision.",
+          "أُنشئت مسودة مشروع من قرارك.",
+        ),
+      );
+      navigate(`/projects/${p.id}`);
+    } catch {
+    } finally {
+      busy.current = false;
+    }
   };
 }
 export function Practice() {
@@ -447,7 +506,16 @@ export function Investor() {
                   onClick={() =>
                     sim.handle(
                       () =>
-                        void sim.save(trade(s, asset, Number(quantity), "buy")),
+                        void sim.save(
+                          trade(s, asset, Number(quantity), "buy"),
+                          undefined,
+                          {
+                            type: "trade",
+                            assetId: asset,
+                            quantity: Number(quantity),
+                            side: "buy",
+                          },
+                        ),
                     )
                   }
                 >
@@ -461,6 +529,13 @@ export function Investor() {
                       () =>
                         void sim.save(
                           trade(s, asset, Number(quantity), "sell"),
+                          undefined,
+                          {
+                            type: "trade",
+                            assetId: asset,
+                            quantity: Number(quantity),
+                            side: "sell",
+                          },
                         ),
                     )
                   }
@@ -489,6 +564,7 @@ export function Investor() {
                             profit: investorTotal(next) - 10000,
                           }
                         : undefined,
+                      { type: "advance" },
                     );
                   })
                 }
@@ -652,6 +728,12 @@ export function Founder() {
                       next.round === 4 || next.cash < 225
                         ? { profit: next.cash - 3000, total: next.cash }
                         : undefined,
+                      {
+                        type: "founder-round",
+                        price: Number(price),
+                        marketing: Number(marketing),
+                        capacity: Number(capacity),
+                      },
                     );
                   })
                 }

@@ -28,7 +28,8 @@ export function usePlanPreparation(onSuccess?: () => void) {
     busy.current = false;
     setState("cancelled");
   };
-  const generate = async (draft: AssessmentDraft, previewFailure = false) => {
+  const request = useRef<{ key: string; id: string } | null>(null);
+  const generate = async (draft: AssessmentDraft, regenerate = false) => {
     if (busy.current) return;
     busy.current = true;
     const token = ++sequence.current;
@@ -36,15 +37,20 @@ export function usePlanPreparation(onSuccess?: () => void) {
     setState("preparing");
     setError("");
     try {
+      const key = draft.id + ":" + draft.revision;
+      if (request.current?.key !== key)
+        request.current = { key, id: crypto.randomUUID() };
       const submission = submitAssessment(draft);
       const contentCatalog = await repository.getCourses();
       const result = await planningService.generatePlan(
         {
           assessment: submission,
+          requestId: request.current.id,
+          regenerate,
           contentCatalog,
           locale: data.preferences.language,
         },
-        { signal: controller.current.signal, previewFailure },
+        { signal: controller.current.signal },
       );
       if (
         !mounted.current ||
@@ -54,6 +60,7 @@ export function usePlanPreparation(onSuccess?: () => void) {
         return;
       await act(repository.saveGeneratedPlan(submission, result));
       if (!mounted.current || token !== sequence.current) return;
+      request.current = null;
       setState("success");
       onSuccess?.();
     } catch (e) {
@@ -65,6 +72,13 @@ export function usePlanPreparation(onSuccess?: () => void) {
             ? e.message
             : "unavailable",
       );
+      if (
+        e instanceof Error &&
+        !["network-error", "cancelled", "generation-in-progress"].includes(
+          e.message,
+        )
+      )
+        request.current = null;
       setState(
         e instanceof PlanningError && e.code === "cancelled"
           ? "cancelled"

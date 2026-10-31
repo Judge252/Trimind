@@ -8,16 +8,17 @@ import type {
   PlanActivity,
   PlanGenerationResult,
   Track,
-} from "../models";
+} from "../models/index.js";
 import {
   answerList,
   answerString,
   pathIds,
   scoreAssessment,
   missingAnswers,
-} from "./assessment";
-import { bi } from "../content/courses";
-import { ASSESSMENT_VERSION } from "../models/planning";
+  discoveryTrack,
+} from "./assessment.js";
+import { bi } from "../content/courses.js";
+import { supportedAssessment } from "../models/planning.js";
 export function buildDemoPlan({
   assessment,
   contentCatalog,
@@ -28,14 +29,15 @@ export function buildDemoPlan({
   locale: Language;
 }): PlanGenerationResult {
   if (
-    assessment.assessmentVersion !== ASSESSMENT_VERSION ||
+    !supportedAssessment(assessment.assessmentVersion) ||
     missingAnswers(assessment).length
   )
     throw Error("invalid-assessment");
-  const selectedPaths = pathIds.filter((t) =>
+  const discovery = assessment.assessmentVersion === 'assessment-2';
+  const selectedPaths = discovery ? [discoveryTrack(assessment)] : pathIds.filter((t) =>
     answerList(assessment, "paths").includes(t),
   );
-  const goal = answerString(assessment, "goal");
+  const goal = answerString(assessment, discovery ? 'ambition' : 'goal');
   const wanted = (
     { build: "builder", business: "founder", money: "investor" } as Record<
       string,
@@ -46,15 +48,16 @@ export function buildDemoPlan({
     ? wanted
     : selectedPaths[0];
   const supportingPaths = selectedPaths.filter((t) => t !== primaryPath);
-  const sessionMinutes = Number(answerString(assessment, "minutes")),
-    daysPerWeek = Number(answerString(assessment, "days")),
-    targetWeeks = Number(answerString(assessment, "weeks"));
+  const availability = answerString(assessment,'availability');
+  const sessionMinutes = discovery ? ({light:20,steady:30,focused:45}[availability] || 20) : Number(answerString(assessment, "minutes")),
+    daysPerWeek = discovery ? ({light:2,steady:3,focused:4}[availability] || 2) : Number(answerString(assessment, "days")),
+    targetWeeks = discovery ? 4 : Number(answerString(assessment, "weeks"));
   const startingPoints = scoreAssessment(assessment),
-    formats = answerList(assessment, "formats");
+    formats = discovery ? [answerString(assessment,'preference')==='reading'?'reading':'practice'] : answerList(assessment, "formats");
   const profile: LearnerProfile = {
     id: crypto.randomUUID(),
     schemaVersion: 1,
-    assessmentVersion: ASSESSMENT_VERSION,
+    assessmentVersion: assessment.assessmentVersion,
     assessmentId: assessment.id,
     createdAt: new Date().toISOString(),
     goal,
@@ -65,10 +68,11 @@ export function buildDemoPlan({
     daysPerWeek,
     targetWeeks,
     formats,
-    connectivity: answerString(assessment, "connectivity"),
-    confidence: answerString(assessment, "confidence"),
-    difficulty: answerString(assessment, "difficulty"),
-    support: answerString(assessment, "support"),
+    connectivity: discovery ? 'steady' : answerString(assessment, "connectivity"),
+    confidence: discovery ? 'low' : answerString(assessment, "confidence"),
+    difficulty: discovery ? (formats.includes('reading') ? 'review' : 'retry') : answerString(assessment, "difficulty"),
+    support: discovery ? 'guided' : answerString(assessment, "support"),
+    ...(discovery ? {discovery:{statedExperience:answerString(assessment,'experience'),motivation:answerString(assessment,'motivation'),challenge:answerString(assessment,'challenge'),preference:answerString(assessment,'preference')}} : {}),
     aspiration: answerString(assessment, "aspiration"),
     startingPoints,
   };
@@ -177,7 +181,7 @@ export function buildDemoPlan({
     id: crypto.randomUUID(),
     schemaVersion: 1,
     version: 1,
-    assessmentVersion: ASSESSMENT_VERSION,
+    assessmentVersion: assessment.assessmentVersion,
     assessmentId: assessment.id,
     createdAt: new Date().toISOString(),
     source: "demo",
@@ -207,8 +211,8 @@ export function validatePlanResult(
   if (
     p.schemaVersion !== 1 ||
     l.schemaVersion !== 1 ||
-    p.assessmentVersion !== ASSESSMENT_VERSION ||
-    l.assessmentVersion !== ASSESSMENT_VERSION ||
+    !supportedAssessment(p.assessmentVersion) ||
+    l.assessmentVersion !== p.assessmentVersion ||
     !["demo", "server"].includes(p.source) ||
     !["en", "ar"].includes(p.locale) ||
     !Number.isInteger(p.version) ||
@@ -276,7 +280,7 @@ export function validatePlanResult(
           (k) => Number.isInteger(s[k]) && s[k] >= 0,
         ) &&
         s.correct <= s.answered &&
-        [2, 3].includes(s.total) &&
+        (p.assessmentVersion === 'assessment-2' ? [0,1] : [2,3]).includes(s.total) &&
         s.answered + s.unknown === s.total,
     ) ||
     new Set(l.startingPoints.map((s: any) => s.track)).size !== 3

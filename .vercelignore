@@ -1,0 +1,7 @@
+.env
+.env.*
+.tmp
+test-results
+server/.model-eval-budget.json
+node_modules
+*.pptx

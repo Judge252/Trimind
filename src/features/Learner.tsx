@@ -1,9 +1,10 @@
+import { currentUser, logout } from "../services/session";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useApp } from "../app/context";
-import { courses } from "../content/courses";
 import { tracks } from "../content/scenarios";
 import { recommend, courseProgress } from "../logic/learning";
+import { activePlan } from '../logic/planning';
 import { repository } from "../services/repository";
 import {
   Button,
@@ -18,8 +19,10 @@ import {
 } from "../components/ui";
 import { PlanDashboard, PlanProfileSummary } from "./planning/MyPlan";
 export function Dashboard() {
-  const { data, t, text } = useApp();
-  const c = recommend(courses, data.preferences),
+  const { data, t, text, catalog: courses, user } = useApp();
+  const journey = activePlan(data);
+  const displayName = data.preferences.name || (typeof user?.user_metadata?.full_name === 'string' ? user.user_metadata.full_name.slice(0,40) : '');
+  const c = courses.find(c=>c.track===journey?.learningPlan.primaryPath) || recommend(courses, data.preferences),
     next = c.lessons.find(
       (l) =>
         !data.lessons.some((p) => p.courseId === c.id && p.lessonId === l.id),
@@ -49,13 +52,13 @@ export function Dashboard() {
     <Page
       eyebrow={t("MY LEARNING", "تعلّمي")}
       title={
-        data.preferences.name
-          ? `${t("Welcome back,", "أهلاً بعودتك،")} ${data.preferences.name}.`
+        displayName
+          ? `${t("Welcome back,", "أهلاً بعودتك،")} ${displayName}.`
           : t("Your next chapter starts here.", "فصلك التالي يبدأ هنا.")
       }
       description={t(
-        "Your work, saved on this browser. Every small step counts.",
-        "عملك محفوظ على هذا المتصفح. كل خطوة صغيرة تُحدث فرقاً.",
+        user ? 'Your journey is saved to your account. Pick up with one useful next step.' : 'Make your next step count. Guest progress is saved on this browser.',
+        user ? 'رحلتك محفوظة في حسابك. تابع بخطوة مفيدة واحدة.' : 'امنح خطوتك القادمة معنى. تقدم الضيف محفوظ على هذا المتصفح.',
       )}
       actions={
         <Go secondary to="/profile">
@@ -64,7 +67,7 @@ export function Dashboard() {
       }
     >
       <PlanDashboard />
-      <div className="metrics">
+      <details className="progress-details"><summary>{t('Your progress at a glance','لمحة عن تقدمك')}</summary><div className="metrics">
         <Metric
           label={t("Lessons complete", "دروس مكتملة")}
           value={`${data.lessons.length}/${total}`}
@@ -81,7 +84,7 @@ export function Dashboard() {
           label={t("Project drafts", "مسودات مشاريع")}
           value={data.projects.length}
         />
-      </div>
+      </div></details>
       <div className="dashboard-grid">
         <div className="panel continue-panel">
           <TrackPill track={c.track} />
@@ -99,10 +102,10 @@ export function Dashboard() {
             max={c.lessons.length}
             label={t("Course progress", "تقدم الدورة")}
           />
-          <Go to={`/learn/${c.id}/${next?.id || "quiz"}`}>
+          <Go secondary={!!journey} to={journey ? `/learn/${c.id}` : `/learn/${c.id}/${next?.id || "quiz"}`}>
             {t(
-              next ? "Continue learning" : "Take the quiz",
-              next ? "تابع التعلم" : "ابدأ الاختبار",
+              journey ? 'Explore this course' : next ? "Continue learning" : "Take the quiz",
+              journey ? 'استكشف هذه الدورة' : next ? "تابع التعلم" : "ابدأ الاختبار",
             )}
           </Go>
         </div>
@@ -160,7 +163,7 @@ export function Dashboard() {
   );
 }
 export function Profile() {
-  const { data, t, text, act, toast } = useApp();
+  const { data, t, text, act, toast, catalog: courses } = useApp();
   const [p, setP] = useState(data.preferences),
     [reset, setReset] = useState(false);
   const navigate = useNavigate();
@@ -173,11 +176,19 @@ export function Profile() {
       title={t("Your learning, your way.", "تعلّمك بطريقتك.")}
       eyebrow={t("PROFILE & PROGRESS", "الملف والتقدم")}
       description={t(
-        "This is a guest profile. Information stays on this browser, not online.",
-        "هذا ملف ضيف. المعلومات على هذا المتصفح وليست محفوظة على الإنترنت.",
+        "Your learning preferences and progress. Guest data stays on this browser; signed-in work is saved to your account.",
+        "تفضيلات التعلم والتقدم. بيانات الضيف على هذا المتصفح؛ والعمل بعد تسجيل الدخول محفوظ في الحساب.",
       )}
     >
       <PlanProfileSummary />
+      {currentUser() && (
+        <Button
+          variant="secondary"
+          onClick={() => void logout().then(() => navigate("/login"))}
+        >
+          {t("Log out", "تسجيل الخروج")}
+        </Button>
+      )}
       <div className="content-sidebar">
         <form
           className="panel"
@@ -194,7 +205,7 @@ export function Profile() {
           }}
         >
           <Field
-            label={t("Demo display name", "اسم العرض التجريبي")}
+            label={t("Display name", "اسم العرض")}
             hint={t(
               "Optional. No personal details needed.",
               "اختياري. لا حاجة لبيانات شخصية.",
@@ -290,18 +301,18 @@ export function Profile() {
         <h2>{t("Start fresh", "ابدأ من جديد")}</h2>
         <p>
           {t(
-            "Reset removes TRIMIND progress, preferences, sessions and drafts from this browser.",
-            "إعادة الضبط تزيل تقدم تريمايند وتفضيلاته وجلساته ومسوداته من المتصفح.",
+            currentUser() ? 'Reset permanently removes learning progress, preferences, sessions, plans and projects from your account across devices.' : 'Reset removes TRIMIND progress, preferences, sessions and drafts from this browser.',
+            currentUser() ? 'تحذف إعادة الضبط تقدم التعلم والتفضيلات والجلسات والخطط والمشاريع من حسابك عبر الأجهزة نهائياً.' : 'إعادة الضبط تزيل تقدم تريمايند وتفضيلاته وجلساته ومسوداته من المتصفح.',
           )}
         </p>
         <Button variant="secondary" onClick={() => setReset(true)}>
-          {t("Reset demo", "إعادة ضبط العرض")}
+          {t("Reset learning data", "إعادة ضبط بيانات التعلم")}
         </Button>
       </div>
       {reset && (
         <Modal
-          title={t("Reset this demo?", "إعادة ضبط العرض؟")}
-          confirmLabel={t("Reset demo", "إعادة الضبط")}
+          title={t("Reset learning data?", "إعادة ضبط بيانات التعلم؟")}
+          confirmLabel={t("Reset learning data", "إعادة الضبط")}
           onClose={() => setReset(false)}
           onConfirm={async () => {
             await act(repository.reset());
@@ -309,8 +320,8 @@ export function Profile() {
           }}
         >
           {t(
-            "This only removes TRIMIND’s namespaced data. This cannot be undone.",
-            "يحذف هذا بيانات تريمايند فقط. لا يمكن التراجع عنه.",
+            "This removes your TRIMIND learning data. Your account stays active. This cannot be undone.",
+            "يحذف هذا بيانات تعلم تريمايند. يبقى حسابك نشطاً. لا يمكن التراجع عنه.",
           )}
         </Modal>
       )}

@@ -2,12 +2,12 @@ import type {
   AssessmentDraft,
   AssessmentSubmission,
   PlanningData,
-} from "../models";
-import { ASSESSMENT_VERSION } from "../models/planning";
-import { assessmentQuestions } from "../content/assessment";
-import { validAnswer, missingAnswers } from "../logic/assessment";
-import { validatePlanResult } from "../logic/planning";
-import { courses } from "../content/courses";
+} from "../models/index.js";
+import { supportedAssessment } from "../models/planning.js";
+import { legacyAssessmentQuestions, discoveryQuestions } from "../content/assessment.js";
+import { validAnswer, missingAnswers } from "../logic/assessment.js";
+import { validatePlanResult } from "../logic/planning.js";
+import { courses } from "../content/courses.js";
 export const emptyPlanning = (): PlanningData => ({
   schemaVersion: 1,
   submissions: [],
@@ -15,11 +15,11 @@ export const emptyPlanning = (): PlanningData => ({
 });
 const obj = (v: unknown): v is Record<string, any> =>
   !!v && typeof v === "object" && !Array.isArray(v);
-function validAnswers(v: unknown) {
+function validAnswers(v: unknown, version: string) {
   return (
     obj(v) &&
     Object.entries(v).every(([id, a]) => {
-      const q = assessmentQuestions.find((q) => q.id === id);
+      const q = (version === 'assessment-2' ? discoveryQuestions : legacyAssessmentQuestions).find((q) => q.id === id);
       return (
         q &&
         obj(a) &&
@@ -34,26 +34,26 @@ export function validDraft(v: unknown): v is AssessmentDraft {
   return (
     obj(v) &&
     v.schemaVersion === 1 &&
-    v.assessmentVersion === ASSESSMENT_VERSION &&
+    supportedAssessment(v.assessmentVersion) &&
     ["id", "createdAt", "updatedAt", "currentQuestionId"].every(
       (k) => typeof v[k] === "string",
     ) &&
-    assessmentQuestions.some((q) => q.id === v.currentQuestionId) &&
+    (v.assessmentVersion==='assessment-2' ? discoveryQuestions : legacyAssessmentQuestions).some((q) => q.id === v.currentQuestionId) &&
     ["intro", "questions", "review"].includes(v.stage) &&
     Number.isInteger(v.revision) &&
     v.revision >= 0 &&
-    validAnswers(v.answers)
+    validAnswers(v.answers, v.assessmentVersion)
   );
 }
 export function validSubmission(v: unknown): v is AssessmentSubmission {
   return (
     obj(v) &&
     v.schemaVersion === 1 &&
-    v.assessmentVersion === ASSESSMENT_VERSION &&
+    supportedAssessment(v.assessmentVersion) &&
     ["id", "draftId", "submittedAt"].every((k) => typeof v[k] === "string") &&
     Number.isInteger(v.draftRevision) &&
     v.draftRevision >= 0 &&
-    validAnswers(v.answers) &&
+    validAnswers(v.answers, v.assessmentVersion) &&
     missingAnswers(v as AssessmentSubmission).length === 0
   );
 }

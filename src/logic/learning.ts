@@ -3,7 +3,7 @@ import type {
   QuizQuestion,
   LessonProgress,
   LearnerPreferences,
-} from "../models";
+} from "../models/index.js";
 export function scoreQuiz(questions: QuizQuestion[], answers: number[]) {
   if (
     answers.length !== questions.length ||

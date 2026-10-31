@@ -1,8 +1,8 @@
+import { currentUser } from "../../services/session";
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useApp } from "../../app/context";
 import { assessmentQuestions } from "../../content/assessment";
-import { courses } from "../../content/courses";
 import { tracks } from "../../content/scenarios";
 import {
   activePlan,
@@ -26,7 +26,7 @@ import { usePlanPreparation } from "./usePlanPreparation";
 import { PreparationStatus } from "./Assessment";
 import type { LearnerProfile, PlanActivity } from "../../models";
 export function PlanProfileSummary() {
-  const { data, t } = useApp();
+  const { data, t, catalog: courses } = useApp();
   const result = activePlan(data);
   return (
     <section className="panel plan-profile-summary">
@@ -34,8 +34,8 @@ export function PlanProfileSummary() {
       <p>
         {result
           ? t(
-              `Active demo plan: version ${result.learningPlan.version}. ${data.planning.plans.length} saved version(s).`,
-              `الخطة التجريبية النشطة: النسخة ${result.learningPlan.version}. ${data.planning.plans.length} نسخة محفوظة.`,
+              `Active plan: version ${result.learningPlan.version}. ${data.planning.plans.length} saved version(s).`,
+              `الخطة النشطة: النسخة ${result.learningPlan.version}. ${data.planning.plans.length} نسخة محفوظة.`,
             )
           : data.planning.draft
             ? t(
@@ -62,7 +62,7 @@ export function PlanProfileSummary() {
   );
 }
 export function StartingSummary({ profile }: { profile: LearnerProfile }) {
-  const { t, text } = useApp();
+  const { t, text, catalog: courses } = useApp();
   return (
     <div className="starting-grid">
       {profile.startingPoints
@@ -106,7 +106,7 @@ export function StartingSummary({ profile }: { profile: LearnerProfile }) {
   );
 }
 export function PlanDashboard({ compact = false }: { compact?: boolean }) {
-  const { data, t, text } = useApp();
+  const { data, t, text, catalog: courses } = useApp();
   const result = activePlan(data);
   if (!result)
     return (
@@ -116,8 +116,8 @@ export function PlanDashboard({ compact = false }: { compact?: boolean }) {
           <p>
             {data.planning.draft
               ? t(
-                  "Your assessment is saved. Resume it to prepare a personal demo plan.",
-                  "تقييمك محفوظ. استأنفه لإعداد خطة شخصية تجريبية.",
+                  "Your assessment is saved. Resume it to prepare a personal plan.",
+                  "تقييمك محفوظ. استأنفه لإعداد خطة شخصية.",
                 )
               : t(
                   "Choose your goals, check your starting knowledge and fit a plan around your available time. Assessment is optional.",
@@ -149,8 +149,8 @@ export function PlanDashboard({ compact = false }: { compact?: boolean }) {
         </h2>
         <p>
           {t(
-            "Demo plan based on your answers.",
-            "خطة تجريبية مبنية على إجاباتك.",
+            "A saved plan based on your answers.",
+            "خطة محفوظة مبنية على إجاباتك.",
           )}
         </p>
         <Progress
@@ -166,7 +166,7 @@ export function PlanDashboard({ compact = false }: { compact?: boolean }) {
           </p>
         )}
         <div className="actions">
-          {next && <Go to={next.url}>{t("Continue my plan", "تابع خطتي")}</Go>}
+          {next && <Go to={next.url}>{t("Continue learning", "تابع التعلم")}</Go>}
           <Go secondary to="/my-plan">
             {t("My plan", "خطتي")}
           </Go>
@@ -181,7 +181,7 @@ export function PlanDashboard({ compact = false }: { compact?: boolean }) {
   );
 }
 export default function MyPlan() {
-  const { data, t, text, act, toast } = useApp(),
+  const { data, t, text, act, toast, catalog: courses } = useApp(),
     navigate = useNavigate(),
     [params] = useSearchParams();
   const [regenerate, setRegenerate] = useState(false),
@@ -250,11 +250,11 @@ export default function MyPlan() {
       ]);
   return (
     <Page
-      title={t("Small steps. A plan of your own.", "خطوات صغيرة. وخطة تخصك.")}
+      title={t("Your TriMind journey", "رحلتك مع تريمايند")}
       eyebrow={`${t("MY PLAN / VERSION", "خطتي / النسخة")} ${p.version}`}
       description={t(
-        "Demo plan based on your answers. Prepared locally using documented rules, not Gemini.",
-        "خطة تجريبية مبنية على إجاباتك. أُعدت محلياً بقواعد موثقة وليس بواسطة Gemini.",
+        "Your saved learning plan. AI-supported plans are checked against the available catalog and your time limits.",
+        "خطتك التعليمية المحفوظة. تُراجع الخطط المدعومة بالذكاء الاصطناعي مقابل المحتوى المتاح وحدود وقتك.",
       )}
       actions={
         <Go secondary to="/assessment">
@@ -262,13 +262,40 @@ export default function MyPlan() {
         </Go>
       }
     >
+      <section className="journey-start">
+        <p className="eyebrow">{t('YOUR RECOMMENDED START','بدايتك المقترحة')}</p>
+        <TrackPill track={p.primaryPath}/>
+        <h2>{next ? text(next.title) : t('A journey worth continuing.','رحلة تستحق أن تستمر.')}</h2>
+        <p>{t(`Your weekly rhythm: ${p.sessionMinutes} minutes × ${p.daysPerWeek} days. Start with the essentials, then put them into practice.`,`إيقاعك الأسبوعي: ${p.sessionMinutes} دقيقة × ${p.daysPerWeek} أيام. ابدأ بالأساسيات ثم طبّقها عملياً.`)}</p>
+        {profile.discovery && <small>{t('Starting level: foundations. Your experience is self-reported; one scenario does not establish proficiency. Lesson checks help you calibrate as you go.','مستوى البداية: الأساسيات. الخبرة معلومة ذاتية وسيناريو واحد لا يثبت الإتقان. تساعدك أسئلة الدروس على تقييم فهمك أثناء التقدم.')}</small>}
+        {next && <div className="actions"><Go to={next.url}>{t('Start my journey','ابدأ رحلتي')}</Go></div>}
+      </section>
+      {p.source === "demo" && (
+        <Status>
+          {t(
+            "This is a previously saved local plan. Sign in to prepare an AI-assisted plan.",
+            "هذه خطة محلية محفوظة سابقاً. سجّل الدخول لإعداد خطة مدعومة بالذكاء الاصطناعي.",
+          )}
+        </Status>
+      )}
       {(params.has("prepared") || preparation.state === "success") && (
         <Status>
           {t(
-            "Your demo plan is ready. Choose your first activity below.",
-            "خطتك التجريبية جاهزة. اختر نشاطك الأول أدناه.",
+            "Your personal plan is ready. Choose your first activity below.",
+            "خطتك الشخصية جاهزة. اختر نشاطك الأول أدناه.",
           )}
         </Status>
+      )}
+      {p.personalisation && (
+        <section className="panel plan-profile-summary">
+          <h2>{t("Your learning direction", "اتجاه تعلمك")}</h2>
+          <p>{text(p.personalisation.summary)}</p>
+          <ul>
+            {p.personalisation.reasons.map((reason, i) => (
+              <li key={i}>{text(reason)}</li>
+            ))}
+          </ul>
+        </section>
       )}
       <div className="metrics">
         <Metric
@@ -288,7 +315,7 @@ export default function MyPlan() {
           value={p.scheduledWeeks}
         />
       </div>
-      <div className="plan-overview">
+      <details className="progress-details"><summary>{t('Plan details and starting point','تفاصيل الخطة ونقطة البداية')}</summary><div className="plan-overview">
         <div>
           <TrackPill track={profile.primaryPath} />
           <h2>{label("goal", profile.goal)}</h2>
@@ -344,7 +371,7 @@ export default function MyPlan() {
               )}
             </li>
             <li>
-              {profile.formats.includes("examples") ||
+              {profile.discovery ? t('Your stated learning preference guides this journey. Every lesson includes an explanation, a worked example and a short check.','يوجّه تفضيلك المعلن هذه الرحلة. يحتوي كل درس على شرح ومثال محلول وسؤال قصير.') : profile.formats.includes("examples") ||
               profile.difficulty === "example"
                 ? t(
                     "Your preference for examples links lessons directly to their worked example. Read the full article when useful.",
@@ -361,10 +388,7 @@ export default function MyPlan() {
                     )}
             </li>
           </ul>
-          <p>
-            {label("confidence", profile.confidence)}.{" "}
-            {label("support", profile.support)}.
-          </p>
+          {!profile.discovery && <p>{label("confidence", profile.confidence)}. {label("support", profile.support)}.</p>}
           <p>
             {profile.confidence === "low"
               ? t(
@@ -401,7 +425,7 @@ export default function MyPlan() {
         <StartingSummary profile={profile} />
       </section>
       <Status>
-        {p.scheduledWeeks > p.targetWeeks
+        {profile.discovery ? t(`The available activities take about ${p.scheduledWeeks} weeks at your chosen pace.`,`تستغرق الأنشطة المتاحة نحو ${p.scheduledWeeks} أسبوعاً بإيقاعك المختار.`) : p.scheduledWeeks > p.targetWeeks
           ? t(
               `Your chosen activities need about ${p.scheduledWeeks} weeks at this pace, beyond your ${p.targetWeeks}-week target. The first ${p.targetWeeks} weeks fit your target; later sessions are clearly marked. Select fewer paths or allow more time if you prefer.`,
               `تحتاج الأنشطة المختارة نحو ${p.scheduledWeeks} أسبوعاً بهذا الإيقاع، أكثر من هدفك البالغ ${p.targetWeeks} أسبوعاً. الأسابيع الأولى ضمن الهدف؛ الجلسات اللاحقة موضحة. اختر مسارات أقل أو وقتاً أطول إذا أردت.`,
@@ -415,7 +439,7 @@ export default function MyPlan() {
           `إجمالي الوقت المقدّر: ${p.totalMinutes} دقيقة. وقت القراءة من الدروس؛ أوقات التدريب والاختبار والمشروع تقديرات للتخطيط وليست مواعيد إلزامية.`,
         )}
       </Status>
-      <section className="plan-section">
+      </details><section className="plan-section">
         <div className="split">
           <h2>{t("Your ordered activities", "أنشطتك بالترتيب")}</h2>
           {next && (
@@ -548,8 +572,8 @@ export default function MyPlan() {
                 )}{" "}
                 ·{" "}
                 {r.learningPlan.source === "demo"
-                  ? t("Demo", "تجريبية")
-                  : t("Server", "الخادم")}
+                  ? t("Saved locally", "محفوظة محلياً")
+                  : t("Personal plan", "خطة شخصية")}
               </span>
               {r.learningPlan.id === p.id ? (
                 <b>{t("Current", "الحالية")}</b>
@@ -572,12 +596,16 @@ export default function MyPlan() {
           onClose={() => setRegenerate(false)}
           onConfirm={() => {
             setRegenerate(false);
+            if (!currentUser()) {
+              navigate("/login?next=%2Fmy-plan");
+              return;
+            }
             const draft = data.planning.draft;
             if (!draft || missingAnswers(draft).length) {
               navigate("/assessment");
               return;
             }
-            void preparation.generate(draft);
+            void preparation.generate(draft, true);
           }}
         >
           {t(

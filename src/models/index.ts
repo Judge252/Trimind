@@ -89,6 +89,7 @@ export interface BuilderState {
   evaluated: boolean;
 }
 export interface SimulationSession {
+  revision?: number;
   id: string;
   track: Track;
   state: InvestorState | FounderState | BuilderState;
@@ -113,7 +114,7 @@ export interface AppData {
   sessions: Partial<Record<Track, SimulationSession>>;
   results: SimulationResult[];
   projects: Project[];
-  planning: import("./planning").PlanningData;
+  planning: import("./planning.js").PlanningData;
 }
 export type {
   AssessmentQuestion,
@@ -127,4 +128,4 @@ export type {
   PlanningData,
   AnswerValue,
   StartingPoint,
-} from "./planning";
+} from "./planning.js";

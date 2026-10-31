@@ -1,3 +1,4 @@
+import { currentUser } from "../../services/session";
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useApp } from "../../app/context";
@@ -131,8 +132,8 @@ export function PreparationStatus({
         <div className="panel" aria-busy="true">
           <Status>
             {t(
-              "Preparing your local demo plan from your answers and the available catalog…",
-              "جارٍ إعداد خطتك التجريبية محلياً من إجاباتك والمحتوى المتاح…",
+              "Preparing your personal plan from your answers and the available learning activities…",
+              "جارٍ إعداد خطتك الشخصية من إجاباتك وأنشطة التعلم المتاحة…",
             )}
           </Status>
           <Button variant="secondary" onClick={preparation.cancel}>
@@ -143,32 +144,58 @@ export function PreparationStatus({
       {preparation.state === "cancelled" && (
         <Status>
           {t(
-            "Preparation cancelled. Your answers and last valid plan are unchanged.",
-            "أُلغي الإعداد. لم تتغير إجاباتك أو آخر خطة صالحة.",
+            "You stopped waiting. Your answers are kept. Check My plan before starting another request.",
+            "توقفت عن الانتظار. إجاباتك محفوظة. تحقق من خطتي قبل بدء طلب آخر.",
           )}
         </Status>
       )}
       {preparation.state === "error" && (
         <Status error>
-          {preparation.error === "stale-assessment"
+          {preparation.error === "authentication-required" ||
+          preparation.error === "session-expired"
             ? t(
-                "Your answers changed during preparation. Review the latest answers and try again.",
-                "تغيرت إجاباتك أثناء الإعداد. راجع أحدث الإجابات وحاول مجدداً.",
+                "Sign in to prepare your plan. Your assessment is saved.",
+                "سجّل الدخول لإعداد خطتك. تقييمك محفوظ.",
               )
-            : preparation.error === "incomplete-assessment"
+            : preparation.error === "generation-in-progress"
               ? t(
-                  "Some required preferences are missing. Finish the assessment first.",
-                  "بعض التفضيلات المطلوبة ناقصة. أكمل التقييم أولاً.",
+                  "A plan is still being prepared. Wait, then retry; a duplicate request was not started.",
+                  "لا يزال إعداد الخطة جارياً. انتظر ثم أعد المحاولة؛ لم يبدأ طلب مكرر.",
                 )
-              : t(
-                  "The demo plan could not be prepared. Your answers and last valid plan are safe. Retry or edit your answers.",
-                  "تعذر إعداد الخطة التجريبية. إجاباتك وآخر خطة صالحة محفوظة. أعد المحاولة أو عدّل إجاباتك.",
-                )}
+              : preparation.error === "rate-limit"
+                ? t(
+                    "Too many planning requests. Please try again later. Your last plan is safe.",
+                    "طلبات إعداد الخطط كثيرة. حاول لاحقاً. آخر خطة محفوظة.",
+                  )
+                : preparation.error === "invalid-output"
+                  ? t(
+                      "The returned plan did not meet the learning rules. Your previous plan is safe. Try again later.",
+                      "لم تستوفِ الخطة قواعد التعلم. خطتك السابقة محفوظة. حاول لاحقاً.",
+                    )
+                  : preparation.error === "insufficient-credits"
+                    ? t(
+                        "Planning has reached its service allowance. Try again later; your work is saved.",
+                        "بلغت خدمة التخطيط حد الاستخدام. حاول لاحقاً؛ عملك محفوظ.",
+                      )
+                    : preparation.error === "stale-assessment"
+                      ? t(
+                          "Your answers changed during preparation. Review the latest answers and try again.",
+                          "تغيرت إجاباتك أثناء الإعداد. راجع أحدث الإجابات وحاول مجدداً.",
+                        )
+                      : preparation.error === "incomplete-assessment"
+                        ? t(
+                            "Some required preferences are missing. Finish the assessment first.",
+                            "بعض التفضيلات المطلوبة ناقصة. أكمل التقييم أولاً.",
+                          )
+                        : t(
+                            "Your plan could not be prepared. Your answers and last valid plan are safe. Retry later or edit your answers.",
+                            "تعذر إعداد خطتك. إجاباتك وآخر خطة صالحة محفوظة. حاول لاحقاً أو عدّل إجاباتك.",
+                          )}
         </Status>
       )}
       {preparation.state === "success" && (
         <Status>
-          {t("Your demo plan is ready.", "خطتك التجريبية جاهزة.")}
+          {t("Your personal plan is ready.", "خطتك الشخصية جاهزة.")}
         </Status>
       )}
     </>
@@ -182,8 +209,9 @@ export default function Assessment() {
     ),
     [error, setError] = useState(false),
     [discard, setDiscard] = useState(false),
-    [confirm, setConfirm] = useState(false),
-    [previewFailure, setPreviewFailure] = useState(false);
+    [confirm, setConfirm] = useState(false);
+  const [saved, setSaved] = useState(true);
+  const saveSequence = useRef(0);
   const current = useRef(draft);
   current.current = draft;
   const preparation = usePlanPreparation(() => navigate("/my-plan?prepared=1"));
@@ -198,9 +226,18 @@ export default function Assessment() {
     heading.current?.focus();
   }, [draft.currentQuestionId, draft.stage]);
   const persist = async (next: typeof draft) => {
+    const ticket = ++saveSequence.current;
+    setSaved(false);
     current.current = next;
     setDraft(next);
-    await act(repository.saveAssessment(next));
+    try {
+      await act(repository.saveAssessment(next));
+      if (ticket === saveSequence.current) setSaved(true);
+      return true;
+    } catch {
+      if (ticket === saveSequence.current) setSaved(false);
+      return false;
+    }
   };
   const change = (v: AnswerValue) => {
     setError(false);
@@ -229,8 +266,12 @@ export default function Assessment() {
     else move(index + 1);
   };
   const generate = () => {
+    if (!currentUser()) {
+      navigate("/login?next=%2Fassessment");
+      return;
+    }
     if (data.planning.plans.length) setConfirm(true);
-    else void preparation.generate(current.current, previewFailure);
+    else void preparation.generate(current.current, false);
   };
   const answered = questions.filter((q) => {
     const v = answerValue(draft, q.id);
@@ -239,16 +280,16 @@ export default function Assessment() {
   return (
     <Page
       eyebrow={t("YOUR STARTING POINT", "نقطة بدايتك")}
-      title={t("A plan that starts with your answers.", "خطة تبدأ بإجاباتك.")}
+      title={t("Find your next direction.", "اكتشف خطوتك القادمة.")}
       description={t(
-        "A local demo assessment, not a diagnosis. Browse freely at any point.",
-        "تقييم تجريبي محلي وليس تشخيصاً. يمكنك التصفح بحرية في أي وقت.",
+        draft.assessmentVersion === 'assessment-1' ? 'Your previously saved assessment. Continue with the original questions and answers.' : 'Seven questions. About 90 seconds. A practical journey shaped around you.',
+        draft.assessmentVersion === 'assessment-1' ? 'تقييمك المحفوظ سابقاً. تابع بالأسئلة والإجابات الأصلية.' : 'سبعة أسئلة. نحو 90 ثانية. رحلة عملية تناسبك.',
       )}
     >
       <div className="assessment-layout">
         <aside className="assessment-sidebar">
           <nav aria-label={t("Assessment sections", "أقسام التقييم")}>
-            {Object.entries(sections).map(([key, label]) => (
+            {draft.assessmentVersion === 'assessment-1' ? Object.entries(sections).map(([key, label]) => (
               <p
                 className={
                   draft.stage === "questions" && q.section === key
@@ -259,7 +300,7 @@ export default function Assessment() {
               >
                 {text(label)}
               </p>
-            ))}
+            )) : <p className="current">{t('YOUR DISCOVERY','رحلة الاكتشاف')}</p>}
           </nav>
           <Progress
             value={answered}
@@ -268,8 +309,8 @@ export default function Assessment() {
           />
           <small>
             {t(
-              "Your answers stay on this browser. No account information is included.",
-              "إجاباتك على هذا المتصفح. لا تتضمن بيانات الحساب.",
+              currentUser() ? 'Your answers are saved to your account.' : 'Your answers are saved here. Sign in when you are ready to create your AI journey.',
+              currentUser() ? 'إجاباتك محفوظة في حسابك.' : 'إجاباتك محفوظة هنا. سجّل الدخول عندما تكون مستعداً لإنشاء رحلتك بالذكاء الاصطناعي.',
             )}
           </small>
           <Link className="text-link" to="/learn">
@@ -299,8 +340,8 @@ export default function Assessment() {
               </p>
               <p>
                 {t(
-                  "A deterministic local adapter will prepare a demo plan. Gemini has not analysed your answers. Server-based personalisation is a Phase 2 feature.",
-                  "يُعد محوّل محلي بقواعد ثابتة خطة تجريبية. لم يحلل Gemini إجاباتك. التخصيص عبر الخادم ميزة للمرحلة الثانية.",
+                  "AI supports your personal learning plan. Your learning preferences and objective starting-point scores are processed by an external AI service. Names, email and optional free text are not sent.",
+                  "يساعد الذكاء الاصطناعي في خطتك الشخصية. تعالج خدمة ذكاء اصطناعي خارجية تفضيلات التعلم ودرجات نقطة البداية الموضوعية. لا تُرسل الأسماء أو البريد أو النص الاختياري.",
                 )}
               </p>
               <div className="actions">
@@ -362,7 +403,7 @@ export default function Assessment() {
                   onClick={() =>
                     index
                       ? move(index - 1)
-                      : void persist({ ...draft, stage: "intro" })
+                      : draft.assessmentVersion === 'assessment-1' ? void persist({ ...draft, stage: "intro" }) : navigate('/')
                   }
                 >
                   {t("Previous", "السابق")}
@@ -479,15 +520,32 @@ export default function Assessment() {
                 </section>
               ))}
               <PreparationStatus preparation={preparation} />
+              <p className="meta">{t('Your validated learning choices and the available catalog are sent to an external AI service to create this journey. Names, email and project data are excluded.','تُرسل اختيارات التعلّم بعد التحقق منها والمحتوى المتاح إلى خدمة ذكاء اصطناعي خارجية لإنشاء الرحلة. لا تُرسل الأسماء أو البريد الإلكتروني أو بيانات المشاريع.')}</p>
+              {!saved && (
+                <Status>
+                  {t(
+                    "Saving changes, or waiting for a connection. Use Save answers to retry.",
+                    "جارٍ حفظ التغييرات أو انتظار الاتصال. استخدم حفظ الإجابات لإعادة المحاولة.",
+                  )}
+                </Status>
+              )}
+              {!saved && (
+                <Button
+                  variant="secondary"
+                  onClick={() => void persist(current.current)}
+                >
+                  {t("Save answers", "حفظ الإجابات")}
+                </Button>
+              )}
               <div className="actions">
                 <Button
                   loading={preparation.state === "preparing"}
-                  disabled={missingAnswers(draft).length > 0}
+                  disabled={missingAnswers(draft).length > 0 || !saved}
                   onClick={generate}
                 >
                   {preparation.state === "error"
                     ? t("Retry plan preparation", "إعادة محاولة إعداد الخطة")
-                    : t("Prepare my demo plan", "إعداد خطتي التجريبية")}
+                    : t("Prepare my personal plan", "إعداد خطتي الشخصية")}
                 </Button>
                 <Button
                   variant="secondary"
@@ -497,25 +555,6 @@ export default function Assessment() {
                   {t("Previous", "السابق")}
                 </Button>
               </div>
-              <details>
-                <summary>
-                  {t(
-                    "Preview service error handling",
-                    "معاينة التعامل مع خطأ الخدمة",
-                  )}
-                </summary>
-                <label className="choice">
-                  <input
-                    type="checkbox"
-                    checked={previewFailure}
-                    onChange={(e) => setPreviewFailure(e.target.checked)}
-                  />
-                  {t(
-                    "Use an explicit demo failure for this attempt. Existing plans are preserved.",
-                    "استخدم إخفاقاً تجريبياً صريحاً لهذه المحاولة. تبقى الخطط الحالية محفوظة.",
-                  )}
-                </label>
-              </details>
             </div>
           )}
           {draft.stage !== "intro" && (
@@ -527,8 +566,12 @@ export default function Assessment() {
                       "الإجابات محفوظة في هذه الجلسة فقط؛ تخزين المتصفح غير متاح.",
                     )
                   : t(
-                      "Answers saved on this browser.",
-                      "الإجابات محفوظة على هذا المتصفح.",
+                      currentUser()
+                        ? "Answers saved to your account."
+                        : "Answers saved on this browser.",
+                      currentUser()
+                        ? "الإجابات محفوظة في حسابك."
+                        : "الإجابات محفوظة على هذا المتصفح.",
                     )}
               </Status>
               <div className="actions">
@@ -536,7 +579,7 @@ export default function Assessment() {
                   variant="secondary"
                   onClick={async () => {
                     preparation.cancel();
-                    await act(repository.saveAssessment(current.current));
+                    if (!(await persist(current.current))) return;
                     toast(
                       t(
                         "Assessment saved. Resume whenever you are ready.",
@@ -580,7 +623,7 @@ export default function Assessment() {
           confirmLabel={t("Prepare new version", "إعداد نسخة جديدة")}
           onConfirm={() => {
             setConfirm(false);
-            void preparation.generate(current.current, previewFailure);
+            void preparation.generate(current.current, true);
           }}
         >
           {t(

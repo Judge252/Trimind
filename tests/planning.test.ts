@@ -15,7 +15,7 @@ import {
   validatePlanResult,
   activityComplete,
 } from "../src/logic/planning";
-import { createDemoPlanningService } from "../src/services/planning";
+import { createDemoPlanningService } from "./fixtures/demo-planning";
 import {
   LocalRepository,
   defaults,
@@ -43,7 +43,7 @@ function draft(
   patch: Record<string, AnswerValue> = {},
   knowledge: "unknown" | "correct" = "unknown",
 ) {
-  let d = newAssessment();
+  let d = newAssessment("assessment-1");
   const values: Record<string, AnswerValue> = {
     goal: "build",
     paths: ["builder"],
@@ -78,7 +78,7 @@ const generate = (d: AssessmentDraft) =>
     locale: "en",
   });
 test("question bank contains 20 core bilingual questions with experience-based follow-ups", () => {
-  assert.equal(questionsFor(newAssessment()).length, 20);
+  assert.equal(questionsFor(newAssessment("assessment-1")).length, 20);
   const d = draft({ "experience-builder": "practiced" });
   assert.equal(questionsFor(d).length, 21);
   assert.equal(
@@ -93,7 +93,7 @@ test("question bank contains 20 core bilingual questions with experience-based f
   }
 });
 test("required preferences validate and empty multi-select is resumable, not submittable", () => {
-  let d = newAssessment();
+  let d = newAssessment("assessment-1");
   assert.ok(missingAnswers(d).length);
   assert.throws(() => submitAssessment(d));
   d = setAssessmentAnswer(d, "paths", []);
@@ -379,6 +379,6 @@ test("account validation and destination guards never imply authentication", asy
       email: fields.email,
       returnTo: "/my-plan",
     }),
-    /phase-two-required/,
+    /service-unconfigured/,
   );
 });

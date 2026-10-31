@@ -1,3 +1,5 @@
+import GuestImport from "../features/GuestImport";
+import { logout } from "../services/session";
 import { useEffect, useState } from "react";
 import { BrowserRouter, Link, NavLink, useLocation } from "react-router-dom";
 import { Menu, X, ArrowUpRight } from "lucide-react";
@@ -28,9 +30,13 @@ function Wordmark() {
   );
 }
 function Shell() {
-  const { data, t, act, ready, error, retry, notice } = useApp();
+  const { data, t, act, ready, error, retry, notice, user } = useApp();
   const [menu, setMenu] = useState(false);
   const location = useLocation();
+  const accountRoute =
+    /^\/(login|signup|forgot-password|reset-password|auth\/callback)(?:\/|$)/.test(
+      location.pathname,
+    );
   useEffect(() => {
     setMenu(false);
     window.scrollTo(0, 0);
@@ -78,14 +84,18 @@ function Shell() {
             id="main-nav"
             aria-label={t("Main navigation", "التنقل الرئيسي")}
           >
-            {[
-              ["/", t("Home", "الرئيسية")],
+            {(location.pathname === '/' ? [
+              ['/#how-it-works',t('How it works','كيف تعمل')],
+              ['/#explore-paths',t('Explore paths','استكشف المسارات')],
+            ] : [
+              ["/dashboard", t("My learning", "تعلّمي")],
+              ["/my-plan", t("My journey", "رحلتي")],
               ["/learn", t("Learn", "تعلّم")],
               ["/practice", t("Practice", "تدرّب")],
               ["/projects", t("Projects", "المشاريع")],
-              ["/my-plan", t("My plan", "خطتي")],
-            ].map(([to, label]) => (
-              <NavLink key={to} to={to} end={to === "/"}>
+              ["/profile", t("Account", "الحساب")],
+            ]).map(([to, label]) => (
+              <NavLink key={to} to={to} end={to === "/" || to.startsWith('/#')} className={({isActive})=>to.startsWith('/#') ? '' : isActive ? 'active' : ''}>
                 {label}
               </NavLink>
             ))}
@@ -105,8 +115,11 @@ function Shell() {
             >
               {data.preferences.language === "en" ? "العربية" : "EN"}
             </button>
-            <NavLink className="my-learning" to="/dashboard">
-              {t("My learning", "تعلّمي")}
+            <NavLink className="account-access" to={user ? '/profile' : '/login'}>
+              {user ? t('Account','الحساب') : t('Log in','تسجيل الدخول')}
+            </NavLink>
+            <NavLink className="my-learning" to={user ? '/dashboard' : '/assessment'}>
+              {user ? t("My learning", "تعلّمي") : t('Get started','ابدأ الآن')}
               <ArrowUpRight size={16} />
             </NavLink>
             <button
@@ -127,21 +140,31 @@ function Shell() {
       </header>
       <div className="guest-bar">
         <span className="guest-dot" />
-        {t("Guest demo", "عرض ضيف")}
+        {user ? t("Signed in", "تم تسجيل الدخول") : t("Guest", "ضيف")}
         <span>·</span>
-        {t("Saved on this browser only", "محفوظ على هذا المتصفح فقط")}
+        {user
+          ? t("Account learning", "تعلم الحساب")
+          : t("Saved on this browser only", "محفوظ على هذا المتصفح فقط")}
       </div>
-      {error ? (
+      {error && !accountRoute ? (
         <main id="main" className="container page">
           <Status error>
             {t(
-              "Unable to load the demo. Please retry.",
-              "تعذر تحميل العرض. حاول مجدداً.",
+              "Unable to load learning data. Please retry.",
+              "تعذر تحميل بيانات التعلم. حاول مجدداً.",
             )}
           </Status>
+          {user && (
+            <Button
+              variant="secondary"
+              onClick={() => void logout().catch(() => {})}
+            >
+              {t("Log out", "تسجيل الخروج")}
+            </Button>
+          )}
           <Button onClick={retry}>{t("Retry", "إعادة المحاولة")}</Button>
         </main>
-      ) : !ready ? (
+      ) : !ready && !accountRoute ? (
         <Skeleton />
       ) : (
         <>
@@ -160,6 +183,14 @@ function Shell() {
               </Status>
             </div>
           )}
+          {user &&
+            ["/dashboard", "/assessment", "/profile"].includes(
+              location.pathname,
+            ) && (
+              <div className="container" style={{ paddingTop: 24 }}>
+                <GuestImport />
+              </div>
+            )}
           <AppRoutes />
         </>
       )}
@@ -177,9 +208,9 @@ function Shell() {
         </div>
         <div className="footer-links">
           <Link to="/profile">{t("Profile & progress", "الملف والتقدم")}</Link>
-          <Link to="/login">{t("Account preview", "معاينة الحساب")}</Link>
+          <Link to="/login">{t("Account", "الحساب")}</Link>
           <span>
-            {t("Phase 1 · Local guest demo", "المرحلة الأولى · عرض ضيف محلي")}
+            {t("Practical learning, step by step", "تعلم عملي خطوة بخطوة")}
           </span>
         </div>
       </footer>

@@ -1,94 +1,59 @@
-# TRIMIND Phase 1 extension verification — 31 October 2026
+# TRIMIND production-candidate QA — 31 October 2026
 
-**COMPLETE — working local frontend, with backend-dependent services explicitly unavailable.**
+**PARTIAL release. Local implementation, real configured integrations and packaged-function checks pass. Public promotion and the remaining account/inbox acceptance require owner action.**
 
-The existing application was extended in place. Existing course/scenario content and simulation calculations have no source changes. The former three-step onboarding and combined account preview were replaced by the integrated assessment flow and separate account screens.
+| Check | Status | Evidence |
+|---|---|---|
+| TypeScript + Vite production build | PASS | Final build: 1,668 modules; no large-chunk warning |
+| Vercel local production packaging | PASS | Node 22 function emitted; local Windows shell/path helper used; no publication |
+| Packaged API runtime | PASS | Actual emitted function: health 200 against live TLS-verified Supabase, catalog 200/three courses, anonymous state 401 |
+| Unit/domain/repository/API/PostgreSQL tests | PASS | 51 tests, zero failures; test-results/unit.tap |
+| Focused backend check after final prompt change | PASS | 13 tests, zero failures; subset of the 51, not 13 additional unique tests |
+| Existing feature browser suite | PASS | 24 checks; 0 browser/asset issues |
+| Discovery/current-product browser suite | PASS | 12 checks; 0 browser issues |
+| Responsive matrices | PASS | Existing 27 routes × EN/AR × 1440/768/320 = 162 inspections; new product 10 route/state variants at the same language/width combinations |
+| Real seven-question onboarding | PASS | Completed in the real signed-in UI, saved to live account |
+| Real Google Auth / refresh / logout / new sign-in | PASS | Browser OAuth/PKCE, confirmed provider session, logout returned to guest, fresh provider sign-in restored saved assessment/plan |
+| Real Supabase schema and grants | PASS | Two applied migration receipts; 17 forced-RLS tables; no browser DML grants; API role nonlogin/nonbypass |
+| Live RLS boundaries | PASS | Unrelated claim contexts cannot read the saved plans; authenticated catalog mutation denied; not two live account-session acceptance |
+| Genuine runtime OpenRouter planning | PASS | Two normal requests; both completed and persisted versions 1/2. Known reported total $0.0005001; no model-selection requests |
+| Live learning and project persistence | PASS | Lesson, server-scored 5/5 quiz, Builder result (18 hours / EGP 650) and competition project restored; version 2 retained 4/6 actual completed activities |
+| Guest import protection | PASS | Real preview retained local work and refused draft collision. Successful/idempotent accepted-material import verified in SQL component tests, not live empty-account acceptance |
+| Secret/artifact checks | PASS | 101 generated text files checked for the actual OpenRouter key and database URI; no findings; dependency packages not rescanned |
+| Public HTTPS deployment | BLOCKED | Existing site is old commit b15acab, no production env, API/deep-route 404. Owner release approval pending |
+| Email confirmation/recovery delivery | BLOCKED | No controlled-inbox receipt or password update performed |
+| Two authenticated accounts / independent same-account browser | BLOCKED | Owner's second-account choice / matching independent sign-in required; no session or browser-storage copying used |
 
-## Actual final checks
+## Actual model usage
 
-| Check | Result |
-|---|---|
-| TypeScript + Vite production build | PASS — npm run build, 1,616 transformed modules |
-| Focused unit/repository/service tests | PASS — 33 tests, zero failures |
-| Existing feature browser suite | PASS — 24 recorded checks |
-| Assessment/planning/account browser suite | PASS — 15 recorded checks |
-| Existing and added route matrix | PASS — 27 routes × 2 languages × 3 widths = 162 route inspections |
-| Populated assessment/plan/account state matrix | PASS — 10 route/state variants × 2 languages × desktop/320px |
-| Browser exceptions, console errors, failed assets | Zero in final runs |
-| External planning/auth requests | Zero; the adapters run locally |
-| Patch whitespace | PASS — git diff --check |
+- Version 1: google/gemini-2.5-flash-lite; 599 prompt / 400 completion tokens; reported $0.0002199; complete.
+- Version 2: google/gemini-2.5-flash-lite; 646 prompt / 539 completion tokens; reported $0.0002802; complete.
 
-Final browser suites ran against **built production assets at http://127.0.0.1:4173** served from the D: workspace. Regression widths: 1440, 768 and 320 CSS pixels. Assessment/account flows also ran in English and Arabic at 1440 and 320. Browser contexts were isolated from the user's existing browser progress.
+These are normal authenticated acceptance requests. The original selection registry and budget ledger were not rerun/reset. Selection's conservative $0.49 reservation is unrelated to the runtime total above.
 
-## New journey checks
+## Evidence tiers
 
-- PASS: Guest entry, required validation, save/exit/resume, refresh and language preserve draft answers
-- PASS: Twenty-question review → honest local demo plan, unknown knowledge and valid schedule
-- PASS: Plan links to a real lesson/example and actual completion updates plan and dashboard
-- PASS: Confirmed regeneration versions plans and retains completed work
-- PASS: Visible error/retry preserves last valid plan and publishes only a successful retry
-- PASS: Plan history restore and discard confirmation retain completed work and saved plans
-- PASS: Full Arabic 320px assessment produces a meaningfully different durable plan from new answers
-- PASS: Populated plans, assessment and all auth states fit ar 1440px
-- PASS: Populated plans, assessment and all auth states fit en 1440px
-- PASS: Populated plans, assessment and all auth states fit ar 320px
-- PASS: Populated plans, assessment and all auth states fit en 320px
-- PASS: Native radio keyboard controls, previous/next and browser back/forward retain draft state
-- PASS: Account signup, recovery, reset, validation, destination and credential isolation: en
-- PASS: Account signup, recovery, reset, validation, destination and credential isolation: ar
-- PASS: No page/console errors, failed assets or external planning/auth requests
+- PostgreSQL WASM/PGlite tests exercise the actual SQL, forced RLS, permissions, constraints, atomic publication and races. Their Auth identities/verifiers/provider responses are private test fixtures, not external acceptance.
+- The hosted schema/grant probes, Google session, two OpenRouter requests, lesson/quiz/Builder/project writes and refresh/restoration above are real configured integrations from the local candidate.
+- The Vercel-emitted function was executed locally after resolving its declared source asset map as the deploy packer does. An unrelated generated copy of the evaluation ledger was excluded; the original ledger was checked unchanged. This is packaging/runtime evidence, not a deployed HTTPS journey.
+- The public domain remains an old release until the owner approves the concrete changes in RELEASE_READINESS.md. No production acceptance is fabricated.
 
-## Existing feature checks
+## Performance, recovery and limits
 
-- PASS: Keyboard skip link reachable and moves focus to main
-- PASS: Guest onboarding → fresh zero-progress dashboard
-- PASS: Knowledge check and lesson completion persist after refresh
-- PASS: Quiz empty validation, scoring, history and refresh deduplication
-- PASS: Investor cash, holdings, active-session persistence, rounds and finalisation
-- PASS: Simulator → create project → edit → save → refresh → text download and print PDF
-- PASS: Founder four rounds, accounting, history and recap
-- PASS: Builder valid/invalid plans, durable result and explicit save to project
-- PASS: Honest account limitation and no password persistence
-- PASS: Delete confirmation cancel and confirm
-- PASS: All 27 routes render without page overflow: en 1440px
-- PASS: All 27 routes render without page overflow: en 768px
-- PASS: All 27 routes render without page overflow: en 320px
-- PASS: Mobile navigation: en
-- PASS: All 27 routes render without page overflow: ar 1440px
-- PASS: All 27 routes render without page overflow: ar 768px
-- PASS: All 27 routes render without page overflow: ar 320px
-- PASS: Mobile navigation: ar
-- PASS: Arabic lesson and five-question quiz end-to-end
-- PASS: 320px Arabic: investor buy/sell and four rounds, Founder four rounds, Builder evaluation and persisted project
-- PASS: Accessible tabs support arrow keys
-- PASS: Browser back/forward and direct route refresh
-- PASS: Reset removes only TRIMIND storage
-- PASS: No browser console errors, page exceptions or failed asset responses
+The entry JS is approximately 87.66 kB (31.66 kB gzip), with separate shared React/router (261.19 kB) and Auth SDK (223.73 kB) chunks plus lazy feature routes. This is not an 87 kB total app claim. The previous 678+ kB monolithic chunk was split without suppressing Vite's warning threshold. Only Latin Inter and Arabic Noto font assets are packaged.
 
-## Focused coverage
+An earlier simultaneous local test/build attempt exhausted host memory; the final test command runs files serially and passed. Windows CLI subprocess environment casing required a local shell/path helper. Local rebuilds can invalidate an already-open lazy route; the app shows a reload recovery screen instead of a blank page, and saved account/guest data remains. The final suites ran against a stable build with zero browser errors.
 
-The 15 new tests cover required/optional and multi-select validation, conditional follow-ups, unknown/scored-answer separation, changed goals/knowledge/presentation, per-session/week limits and activity splitting, exact catalog references, malformed plan records, old version-one migration, locale/draft persistence, version history, duplicate/stale publication, injected service failure, cancellation, completed-work retention, scoped reset, account validation and safe intended destinations. The original 18 tests still cover quizzes, simulation rules/accounting, original persistence and reset.
+No Docker build, physical-device, Firefox, Safari or screen-reader acceptance is claimed. Successful Google email verification is not SMTP receipt evidence. Founder and Investor were fully exercised in the guest browser/domain suites; only Builder was exercised through the real account UI in this run.
 
-Cancellation and stale-response rejection were verified at the service/repository layer. The local adapter normally finishes quickly, so a long preparing state was not manufactured for visual testing. Generation failure/retry was also tested through the labelled demo error-preview UI while preserving the last valid plan.
+## Artifacts
 
-## Evidence
+- test-results/unit.tap; test-results/backend-final.tap
+- test-results/browser-report.json; test-results/backend-ui/report.json
+- test-results/live-schema.json; test-results/packaged-api.json
+- test-results/secret-scan.json; test-results/release-inspection.json
+- test-results/release-preview.png; backend-ui EN/AR screenshots at all three widths
+- FINAL_ACCEPTANCE_HANDOFF.md: full acceptance table and remaining actions
+- COMPETITION_DEMO.md: five-minute walkthrough and honest outage route
 
-- test-results/browser-report.json
-- test-results/planning/browser-report.json
-- test-results/planning/assessment-*-viewport.png
-- test-results/planning/review-*.png
-- test-results/planning/plan-*.png and plan-*-viewport.png
-- test-results/planning/account-reset-*.png
-- Existing simulator/dashboard/home screenshots, exported project text and Chromium print PDF under test-results/
-
-English desktop and Arabic 320px plan screenshots, assessment/review screens and account failure states were visually inspected. Existing simulator/responsive evidence was regenerated.
-
-## Scope and remaining gaps
-
-- Working now: resumable bilingual assessment, answer review, local rules-based plans, real activity links/progress, capacity-limited schedule, plan versions/restore, confirmation and retry/failure handling, account/recovery/reset form validation.
-- No Gemini request ran. No SDK, API key, secret or planning/auth fetch exists in browser source. Repository access remains centralized; only repository.ts accesses localStorage.
-- Real login, signup, recovery delivery, reset-token validation, database ownership, cloud saving, content administration, guest-to-account migration, server-only Gemini and deployment remain Phase 2. No authenticated session or successful email delivery is simulated.
-- No hosted HTTPS acceptance, physical phone, screen-reader audit, Firefox/Safari or physical printer acceptance. Chromium viewport and print-PDF checks are local browser evidence.
-- Browser storage remains local, unencrypted, and designed for a single active tab. Completed work is never reset by plan replacement. The existing key remains trimind:phase1:v1 with an additive planning object.
-
-Source and production output are in D:\my  business\Trimind. The original C: delivery directory was refreshed with the same source/output while preserving its existing material. Neither location is automatically synchronized for future edits. See PHASE_2_HANDOFF.md for schemas, local rules, service request/response boundaries and migration requirements.
+Old planning-browser/phase reports are historical and are not the current acceptance result.

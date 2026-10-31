@@ -3,3 +3,10 @@ dist/
 .tmp/
 test-results/
 *.tsbuildinfo
+.env
+.env.*
+server/.model-eval-budget.json
+.vercel/
+
+.vercel
+.env*

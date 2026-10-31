@@ -1,0 +1,192 @@
+{
+  "evaluatedAt": "2026-10-31T00:24:19.318Z",
+  "capUsd": 0.5,
+  "previousAttempts": [
+    {
+      "id": "google/gemini-2.5-flash-lite",
+      "locale": "en",
+      "status": "failed",
+      "code": "provider-unavailable",
+      "choice": {
+        "id": "google/gemini-2.5-flash-lite",
+        "provider": "Google Vertex",
+        "promptPrice": 1e-7,
+        "completionPrice": 4e-7
+      }
+    },
+    {
+      "id": "google/gemini-2.5-flash-lite",
+      "locale": "ar",
+      "status": "failed",
+      "code": "provider-unavailable",
+      "choice": {
+        "id": "google/gemini-2.5-flash-lite",
+        "provider": "Google Vertex",
+        "promptPrice": 1e-7,
+        "completionPrice": 4e-7
+      }
+    },
+    {
+      "id": "google/gemini-2.5-flash",
+      "locale": "en",
+      "status": "failed",
+      "code": "provider-unavailable",
+      "choice": {
+        "id": "google/gemini-2.5-flash",
+        "provider": "Google Vertex",
+        "promptPrice": 3e-7,
+        "completionPrice": 0.0000025
+      }
+    },
+    {
+      "id": "google/gemini-2.5-flash",
+      "locale": "ar",
+      "status": "failed",
+      "code": "provider-unavailable",
+      "choice": {
+        "id": "google/gemini-2.5-flash",
+        "provider": "Google Vertex",
+        "promptPrice": 3e-7,
+        "completionPrice": 0.0000025
+      }
+    },
+    {
+      "id": "openai/gpt-4.1-mini",
+      "locale": "en",
+      "status": "failed",
+      "code": "provider-unavailable",
+      "choice": {
+        "id": "openai/gpt-4.1-mini",
+        "provider": "OpenAI",
+        "promptPrice": 4e-7,
+        "completionPrice": 0.0000016
+      }
+    },
+    {
+      "id": "openai/gpt-4.1-mini",
+      "locale": "ar",
+      "status": "failed",
+      "code": "provider-unavailable",
+      "choice": {
+        "id": "openai/gpt-4.1-mini",
+        "provider": "OpenAI",
+        "promptPrice": 4e-7,
+        "completionPrice": 0.0000016
+      }
+    }
+  ],
+  "privacy": {
+    "data_collection": "deny",
+    "zdr": false,
+    "explicitProviders": true,
+    "reason": "Strict ZDR endpoints were unavailable. Only non-personal synthetic profiles were evaluated; no zero-retention claim is made."
+  },
+  "reservedUpperBound": 0.4899999999999999,
+  "results": [
+    {
+      "id": "google/gemini-2.5-flash-lite",
+      "locale": "en",
+      "status": "pass",
+      "latencyMs": 1934,
+      "promptTokens": 541,
+      "completionTokens": 451,
+      "cost": 0.0002345,
+      "estimatedUpperBound": 0.0009816999999999998,
+      "choice": {
+        "id": "google/gemini-2.5-flash-lite",
+        "provider": "google-ai-studio",
+        "promptPrice": 1e-7,
+        "completionPrice": 4e-7
+      }
+    },
+    {
+      "id": "google/gemini-2.5-flash-lite",
+      "locale": "ar",
+      "status": "pass",
+      "latencyMs": 2418,
+      "promptTokens": 847,
+      "completionTokens": 627,
+      "cost": 0.0003355,
+      "estimatedUpperBound": 0.0011224999999999998,
+      "choice": {
+        "id": "google/gemini-2.5-flash-lite",
+        "provider": "google-ai-studio",
+        "promptPrice": 1e-7,
+        "completionPrice": 4e-7
+      }
+    },
+    {
+      "id": "google/gemini-2.5-flash",
+      "locale": "en",
+      "status": "pass",
+      "latencyMs": 2828,
+      "promptTokens": 541,
+      "completionTokens": 337,
+      "cost": 0.0010048,
+      "estimatedUpperBound": 0.005285100000000001,
+      "choice": {
+        "id": "google/gemini-2.5-flash",
+        "provider": "google-ai-studio",
+        "promptPrice": 3e-7,
+        "completionPrice": 0.0000025
+      }
+    },
+    {
+      "id": "google/gemini-2.5-flash",
+      "locale": "ar",
+      "status": "pass",
+      "latencyMs": 3516,
+      "promptTokens": 847,
+      "completionTokens": 493,
+      "cost": 0.0014866,
+      "estimatedUpperBound": 0.005707500000000001,
+      "choice": {
+        "id": "google/gemini-2.5-flash",
+        "provider": "google-ai-studio",
+        "promptPrice": 3e-7,
+        "completionPrice": 0.0000025
+      }
+    },
+    {
+      "id": "openai/gpt-4.1-mini",
+      "locale": "en",
+      "status": "pass",
+      "latencyMs": 3344,
+      "promptTokens": 637,
+      "completionTokens": 411,
+      "cost": 0.0009124,
+      "estimatedUpperBound": 0.003926799999999999,
+      "choice": {
+        "id": "openai/gpt-4.1-mini",
+        "provider": "openai",
+        "promptPrice": 4e-7,
+        "completionPrice": 0.0000016
+      }
+    },
+    {
+      "id": "openai/gpt-4.1-mini",
+      "locale": "ar",
+      "status": "failed",
+      "code": "invalid-output",
+      "choice": {
+        "id": "openai/gpt-4.1-mini",
+        "provider": "openai",
+        "promptPrice": 4e-7,
+        "completionPrice": 0.0000016
+      }
+    }
+  ],
+  "selected": {
+    "id": "google/gemini-2.5-flash-lite",
+    "provider": "google-ai-studio",
+    "promptPrice": 1e-7,
+    "completionPrice": 4e-7
+  },
+  "fallback": {
+    "id": "google/gemini-2.5-flash",
+    "provider": "google-ai-studio",
+    "promptPrice": 3e-7,
+    "completionPrice": 0.0000025
+  },
+  "scope": "Two synthetic profiles per candidate; schema/catalog/prerequisites/workload/language checks. No universal best-model claim."
+}

@@ -1,5 +1,5 @@
-import { assessmentQuestions } from "../content/assessment";
-import { ASSESSMENT_VERSION } from "../models/planning";
+import { assessmentQuestions, legacyAssessmentQuestions, discoveryQuestions } from "../content/assessment.js";
+import { ASSESSMENT_VERSION } from "../models/planning.js";
 import type {
   AssessmentDraft,
   AssessmentQuestion,
@@ -7,7 +7,7 @@ import type {
   AnswerValue,
   StartingPoint,
   Track,
-} from "../models";
+} from "../models/index.js";
 export const pathIds: Track[] = ["builder", "founder", "investor"];
 export const answerValue = (
   draft: Pick<AssessmentDraft, "answers">,
@@ -27,8 +27,13 @@ export const answerList = (
   const v = answerValue(draft, id);
   return Array.isArray(v) ? v : [];
 };
-export function questionsFor(draft: Pick<AssessmentDraft, "answers">) {
-  return assessmentQuestions
+type Answers = Pick<AssessmentDraft, 'answers'> & {assessmentVersion?:string};
+export function discoveryTrack(draft: Answers): Track {
+  return ({build:'builder',business:'founder',money:'investor'} as Record<string,Track>)[answerString(draft,'ambition')] || 'builder';
+}
+export function questionsFor(draft: Answers) {
+  if (draft.assessmentVersion === 'assessment-2') return discoveryQuestions.filter(q=> !q.track || q.track===discoveryTrack(draft));
+  return legacyAssessmentQuestions
     .filter(
       (q) =>
         !q.followUpFor ||
@@ -55,7 +60,7 @@ export function validAnswer(
     );
   return typeof value === "string" && ids.includes(value);
 }
-export function missingAnswers(draft: Pick<AssessmentDraft, "answers">) {
+export function missingAnswers(draft: Answers) {
   return questionsFor(draft).filter((q) => {
     const value = answerValue(draft, q.id);
     return (
@@ -67,7 +72,7 @@ export function missingAnswers(draft: Pick<AssessmentDraft, "answers">) {
   });
 }
 export function scoreAssessment(
-  draft: Pick<AssessmentDraft, "answers">,
+  draft: Answers,
 ): StartingPoint[] {
   return pathIds.map((track) => {
     const questions = questionsFor(draft).filter(
@@ -98,17 +103,17 @@ export function scoreAssessment(
     };
   });
 }
-export function newAssessment(): AssessmentDraft {
+export function newAssessment(version = ASSESSMENT_VERSION): AssessmentDraft {
   const now = new Date().toISOString();
   return {
     id: crypto.randomUUID(),
     schemaVersion: 1,
-    assessmentVersion: ASSESSMENT_VERSION,
+    assessmentVersion: version,
     revision: 0,
     createdAt: now,
     updatedAt: now,
-    stage: "intro",
-    currentQuestionId: "goal",
+    stage: version === 'assessment-2' ? 'questions' : 'intro',
+    currentQuestionId: version === 'assessment-2' ? 'ambition' : 'goal',
     answers: {},
   };
 }
@@ -136,7 +141,7 @@ export function submitAssessment(draft: AssessmentDraft): AssessmentSubmission {
   return {
     id: crypto.randomUUID(),
     schemaVersion: 1,
-    assessmentVersion: ASSESSMENT_VERSION,
+    assessmentVersion: draft.assessmentVersion,
     draftId: draft.id,
     draftRevision: draft.revision,
     submittedAt: new Date().toISOString(),

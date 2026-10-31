@@ -1,4 +1,4 @@
-import { bi } from "./courses";
+import { bi } from "./courses.js";
 export const tracks = {
   builder: {
     name: bi("Builder", "المطوّر"),

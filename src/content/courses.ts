@@ -1,4 +1,4 @@
-import type { Course, Localized, QuizQuestion, Lesson } from "../models";
+import type { Course, Localized, QuizQuestion, Lesson } from "../models/index.js";
 export const bi = (en: string, ar: string): Localized => ({ en, ar });
 const q = (
   id: string,
@@ -455,7 +455,7 @@ export const courses: Course[] = [
           [
             ["Yes", "نعم"],
             ["No, it exchanges cash for holdings", "لا، يبدّل النقد بحيازة"],
-            ["Only in a demo", "في العرض فقط"],
+            ["Only in a simulation", "في المحاكاة فقط"],
           ],
           1,
           "A trade changes allocation, not total value at the same price.",
@@ -508,8 +508,8 @@ export const courses: Course[] = [
             "النتيجة الجيدة ليست دائماً دليلاً على عملية جيدة. قد ينجح رهان خطر مرة بالصدفة. قبل القرار سجّل هدفك والأفق الزمني والخسارة المحتملة وسبب التوزيع.",
           ),
           bi(
-            "After an event, compare what changed with your original reasoning. Avoid assuming the latest rise must continue. In this demo, every market price is predefined so you can repeat a scenario and compare decisions fairly.",
-            "بعد الحدث قارن التغير بمنطقك الأصلي. لا تفترض أن الارتفاع الأخير سيستمر. في هذا العرض كل الأسعار محددة مسبقاً لتكرار السيناريو ومقارنة القرارات بإنصاف.",
+            "After an event, compare what changed with your original reasoning. Avoid assuming the latest rise must continue. In this simulation, every market price is predefined so you can repeat a scenario and compare decisions fairly.",
+            "بعد الحدث قارن التغير بمنطقك الأصلي. لا تفترض أن الارتفاع الأخير سيستمر. في هذه المحاكاة كل الأسعار محددة مسبقاً لتكرار السيناريو ومقارنة القرارات بإنصاف.",
           ),
           bi(
             "Unrealised change is a change in holdings value before sale. Selling turns holdings into cash at the current simulated price. Always include the remaining cash in the final recap. This exercise is education, not a recommendation to invest.",

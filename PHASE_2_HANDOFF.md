@@ -1,3 +1,11 @@
+> Superseded by FINAL_ACCEPTANCE_HANDOFF.md and RELEASE_READINESS.md for the 31 October production candidate. The earlier phase notes below are historical.
+
+# Current backend handoff
+
+Phase 2 implementation now uses Supabase/Postgres and server-only OpenRouter. The sections below preserve the earlier frontend handoff for historical contracts; they do not describe current runtime account/planning adapters. Read [BACKEND_STATUS.md](BACKEND_STATUS.md) and [FINAL_ACCEPTANCE_HANDOFF.md](FINAL_ACCEPTANCE_HANDOFF.md) first for current implementation, measured model selection, configuration gates and evidence. The D: workspace is authoritative; the older C: copy was not updated for this phase.
+
+---
+
 # TRIMIND Phase 2 handoff
 
 Phase 1 is a browser-local frontend demo. Phase 2 must replace local trust and persistence with real identity, authorization and authoritative server validation. No backend, deployment or real authentication was built or claimed in Phase 1.

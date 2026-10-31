@@ -1,3 +1,4 @@
+import { supabase, currentUser } from "./session";
 export type AuthRequest =
   | { kind: "login"; email: string; password: string; returnTo: string }
   | {
@@ -11,18 +12,76 @@ export type AuthRequest =
   | { kind: "reset"; password: string; token: string; returnTo: string };
 export class AuthUnavailable extends Error {
   constructor() {
-    super("phase-two-required");
+    super("service-unconfigured");
   }
 }
 export interface AuthService {
-  submit(request: AuthRequest): Promise<never>;
+  submit(request: AuthRequest): Promise<{
+    status:
+      "signed-in" | "verify-email" | "recovery-requested" | "password-updated";
+  }>;
 }
 export const authService: AuthService = {
-  async submit(_request) {
-    await new Promise<void>((resolve) => setTimeout(resolve, 0));
-    throw new AuthUnavailable();
+  async submit(r) {
+    if (!supabase) throw new AuthUnavailable();
+    const redirect =
+      location.origin +
+      "/auth/callback?next=" +
+      encodeURIComponent(intendedDestination(r.returnTo));
+    if (r.kind === "login") {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: r.email,
+        password: r.password,
+      });
+      if (error) throw Error("login-failed");
+      return { status: "signed-in" };
+    }
+    if (r.kind === "signup") {
+      const { data, error } = await supabase.auth.signUp({
+        email: r.email,
+        password: r.password,
+        options: { data: { display_name: r.name }, emailRedirectTo: redirect },
+      });
+      if (error) throw Error("signup-failed");
+      return { status: data.session ? "signed-in" : "verify-email" };
+    }
+    if (r.kind === "recovery") {
+      const { error } = await supabase.auth.resetPasswordForEmail(r.email, {
+        redirectTo: redirect + "&mode=recovery",
+      });
+      if (error) throw Error("recovery-failed");
+      return { status: "recovery-requested" };
+    }
+    if (!currentUser() || !recoveryAllowed()) throw Error("invalid-reset-link");
+    const { error } = await supabase.auth.updateUser({ password: r.password });
+    if (error) throw Error("reset-failed");
+    sessionStorage.removeItem("trimind:recovery");
+    return { status: "password-updated" };
   },
 };
+export async function continueWithGoogle(returnTo: string) {
+  if (!supabase) throw new AuthUnavailable();
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo:
+        location.origin +
+        "/auth/callback?next=" +
+        encodeURIComponent(intendedDestination(returnTo)),
+    },
+  });
+  if (error) throw Error("google-unavailable");
+}
+export function recoveryAllowed() {
+  try {
+    const r = JSON.parse(sessionStorage.getItem("trimind:recovery") || "null");
+    return (
+      !!currentUser() && r?.user === currentUser()?.id && r.expires > Date.now()
+    );
+  } catch {
+    return false;
+  }
+}
 export function intendedDestination(value: string | null) {
   return value &&
     /^\/(assessment|my-plan|dashboard|learn|practice|projects|profile)(?:[/?#]|$)/.test(

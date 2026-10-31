@@ -1,5 +1,5 @@
-import type { BuilderState, FounderState, InvestorState } from "../models";
-import { assets, features, founderEvents } from "../content/scenarios";
+import type { BuilderState, FounderState, InvestorState } from "../models/index.js";
+import { assets, features, founderEvents } from "../content/scenarios.js";
 export type RuleError =
   | "quantity"
   | "cash"

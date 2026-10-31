@@ -1,8 +1,7 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { Check, ArrowRight } from "lucide-react";
 import { useApp } from "../app/context";
-import { courses } from "../content/courses";
 import { tracks } from "../content/scenarios";
 import { repository } from "../services/repository";
 import { courseProgress, scoreQuiz } from "../logic/learning";
@@ -20,7 +19,7 @@ import {
 } from "../components/ui";
 import type { Track, QuizAttempt } from "../models";
 export function NotFound() {
-  const { t } = useApp();
+  const { t, catalog: courses } = useApp();
   return (
     <Page
       title={t("A little off track.", "خرجنا قليلاً عن المسار.")}
@@ -39,7 +38,7 @@ export function NotFound() {
   );
 }
 export function Library() {
-  const { t, text } = useApp();
+  const { t, text, catalog: courses } = useApp();
   const [params, setParams] = useSearchParams();
   const value = params.get("track") || "all";
   const filtered = courses.filter((c) => value === "all" || c.track === value);
@@ -91,7 +90,7 @@ export function Library() {
 }
 export function CoursePage() {
   const { courseId } = useParams();
-  const { data, t, text } = useApp();
+  const { data, t, text, catalog: courses } = useApp();
   const c = courses.find((c) => c.id === courseId);
   if (!c) return <NotFound />;
   const count = courseProgress(c, data.lessons),
@@ -184,7 +183,7 @@ export function CoursePage() {
 }
 export function LessonPage() {
   const { courseId, lessonId } = useParams();
-  const { data, t, text, act, toast } = useApp();
+  const { data, t, text, act, toast, catalog: courses } = useApp();
   const [answer, setAnswer] = useState<number | null>(null),
     [checked, setChecked] = useState(false);
   const c = courses.find((c) => c.id === courseId),
@@ -324,7 +323,7 @@ export function LessonPage() {
 }
 export function QuizPage() {
   const { courseId } = useParams();
-  const { data, t, text, act } = useApp();
+  const { data, t, text, act, catalog: courses } = useApp();
   const c = courses.find((c) => c.id === courseId);
   const [answers, setAnswers] = useState<number[]>(Array(5).fill(-1)),
     [index, setIndex] = useState(0),
@@ -332,13 +331,14 @@ export function QuizPage() {
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
   if (!c) return <NotFound />;
+  const attemptId = useRef(crypto.randomUUID());
   const submit = async () => {
     if (busy || result) return;
     try {
       const score = scoreQuiz(c.quiz, answers);
       setBusy(true);
       const attempt = {
-        id: crypto.randomUUID(),
+        id: attemptId.current,
         courseId: c.id,
         answers,
         score,
@@ -351,8 +351,12 @@ export function QuizPage() {
     } catch {
       setError(
         t(
-          "Answer every question before submitting.",
-          "أجب عن كل الأسئلة قبل الإرسال.",
+          answers.every((a) => a >= 0)
+            ? "Unable to save this attempt. Check your connection and retry."
+            : "Answer every question before submitting.",
+          answers.every((a) => a >= 0)
+            ? "تعذر حفظ المحاولة. تحقق من الاتصال وأعد المحاولة."
+            : "أجب عن كل الأسئلة قبل الإرسال.",
         ),
       );
     } finally {
@@ -404,6 +408,7 @@ export function QuizPage() {
                 variant="secondary"
                 onClick={() => {
                   setResult(null);
+                  attemptId.current = crypto.randomUUID();
                   setAnswers(Array(5).fill(-1));
                   setIndex(0);
                 }}
@@ -486,8 +491,8 @@ export function QuizPage() {
         )}
         <p className="meta">
           {t(
-            "Completed attempts on this browser: ",
-            "المحاولات المكتملة على هذا المتصفح: ",
+            "Your completed attempts: ",
+            "محاولاتك المكتملة: ",
           )}
           {data.attempts.filter((a) => a.courseId === c.id).length}
         </p>

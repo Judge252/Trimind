@@ -4,62 +4,35 @@ import type {
   Language,
   PlanGenerationResult,
 } from "../models";
-import { buildDemoPlan, validatePlanResult } from "../logic/planning";
+import { api } from "./api";
 export interface PlanRequest {
   assessment: AssessmentSubmission;
   contentCatalog: Course[];
   locale: Language;
+  requestId?: string;
+  regenerate?: boolean;
 }
-export type PlanningErrorCode =
-  | "cancelled"
-  | "invalid-assessment"
-  | "catalog-unavailable"
-  | "invalid-plan"
-  | "unavailable";
 export class PlanningError extends Error {
-  constructor(public code: PlanningErrorCode) {
+  constructor(public code: string) {
     super(code);
   }
 }
 export interface PlanningService {
   generatePlan(
     request: PlanRequest,
-    options?: { signal?: AbortSignal; previewFailure?: boolean },
+    options?: { signal?: AbortSignal },
   ): Promise<PlanGenerationResult>;
 }
-export function createDemoPlanningService(
-  engine = buildDemoPlan,
-): PlanningService {
-  return {
-    async generatePlan(request, options) {
-      const cancelled = () => {
-        if (options?.signal?.aborted) throw new PlanningError("cancelled");
-      };
-      cancelled();
-      // Yield to the UI/event loop; no artificial analysis timer or fabricated model work.
-      await new Promise<void>((resolve) => setTimeout(resolve, 0));
-      cancelled();
-      if (options?.previewFailure) throw new PlanningError("unavailable");
-      try {
-        const result = engine(request);
-        cancelled();
-        if (!validatePlanResult(result, request.contentCatalog))
-          throw new PlanningError("invalid-plan");
-        return result;
-      } catch (e) {
-        if (e instanceof PlanningError) throw e;
-        const code = e instanceof Error ? e.message : "";
-        throw new PlanningError(
-          [
-            "invalid-assessment",
-            "catalog-unavailable",
-            "invalid-plan",
-          ].includes(code)
-            ? (code as PlanningErrorCode)
-            : "unavailable",
-        );
-      }
-    },
-  };
-}
-export const planningService = createDemoPlanningService();
+export const planningService: PlanningService = {
+  async generatePlan(request, options) {
+    return api("/api/plans", {
+      body: {
+        requestId: request.requestId || crypto.randomUUID(),
+        assessment: request.assessment,
+        locale: request.locale,
+        regenerate: request.regenerate || false,
+      },
+      signal: options?.signal,
+    });
+  },
+};

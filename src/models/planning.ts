@@ -1,5 +1,6 @@
-import type { Localized, Track } from "./index";
-export const ASSESSMENT_VERSION = "assessment-1";
+import type { Localized, Track } from "./index.js";
+export const ASSESSMENT_VERSION = "assessment-2";
+export const supportedAssessment = (v: unknown) => v === 'assessment-1' || v === ASSESSMENT_VERSION;
 export type AnswerValue = string | string[];
 export interface AssessmentQuestion {
   id: string;
@@ -47,6 +48,7 @@ export interface StartingPoint {
   level: "explore" | "review" | "ready";
 }
 export interface LearnerProfile {
+  discovery?: {statedExperience:string; motivation:string; challenge:string; preference?:string};
   id: string;
   schemaVersion: 1;
   assessmentVersion: string;
@@ -88,6 +90,7 @@ export interface PlanActivity {
   }[];
 }
 export interface LearningPlan {
+  personalisation?: { summary: Localized; reasons: Localized[] };
   id: string;
   schemaVersion: 1;
   version: number;

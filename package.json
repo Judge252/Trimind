@@ -1,32 +1,44 @@
 {
-  "name": "trimind-phase-one",
+  "name": "trimind",
   "private": true,
   "version": "1.0.0",
   "type": "module",
+  "engines": {"node":"22.x"},
   "scripts": {
     "dev": "vite --host 127.0.0.1",
-    "build": "tsc -b && vite build",
-    "test": "tsx --test tests/*.test.ts",
+    "build": "tsc -b && tsc -p tsconfig.server.json && vite build",
+    "test": "tsx --test --test-concurrency=1 tests/*.test.ts",
     "test:browser": "node tests/browser.mjs",
     "preview": "vite preview --host 127.0.0.1",
-    "test:planning-browser": "node --import tsx tests/planning-browser.mjs"
+    "test:planning-browser": "node --import tsx tests/planning-browser.mjs",
+    "dev:api": "node --env-file-if-exists=.env --import tsx server/index.ts",
+    "start": "node --env-file-if-exists=.env --import tsx server/index.ts",
+    "db:migrate": "node --env-file-if-exists=.env --import tsx server/migrate.ts",
+    "models:evaluate": "node --env-file-if-exists=.env --import tsx scripts/evaluate-models.ts",
+    "test:backend": "tsx --test tests/backend.test.ts",
+    "test:product-browser": "node --import tsx tests/product-browser.mjs"
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.3.0",
     "@fontsource-variable/noto-sans-arabic": "^5.3.0",
+    "@supabase/supabase-js": "^2.118.0",
     "lucide-react": "^0.468.0",
+    "pg": "^8.23.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "react-router-dom": "^7.9.0"
+    "react-router-dom": "^7.9.0",
+    "zod": "^4.6.7",
+    "tsx": "^4.20.0"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.13",
     "@playwright/test": "^1.56.0",
     "@types/node": "^22.0.0",
+    "@types/pg": "^8.23.1",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^5.0.0",
     "prettier": "^3.9.10",
-    "tsx": "^4.20.0",
     "typescript": "^5.9.3",
     "vite": "^7.1.0"
   }
